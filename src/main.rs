@@ -4,6 +4,7 @@ pub mod opcodes;
 pub mod registers;
 
 use opcodes::opcodes_values;
+use opcodes::*;
 use std::env;
 
 fn mem_read(param: u16) -> u16 {
@@ -51,6 +52,7 @@ fn main() {
         match op {
             opcodes_values::OP_ADD => {
                 // Add impl
+                add::add(instr, &mut regs);
             }
             opcodes_values::OP_AND => {
                 // And impl
