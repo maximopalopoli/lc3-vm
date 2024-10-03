@@ -22,12 +22,10 @@ pub fn add(instr: u16, regs: &mut [u16; 11]) {
     utils::update_flags(dest_reg, regs);
 }
 
-
 #[cfg(test)]
 mod tests {
-    use super::add;
     use super::super::super::registers;
-
+    use super::add;
 
     #[test]
     fn test_01() {
@@ -36,7 +34,7 @@ mod tests {
         let mut regs: [u16; 11] = [0; 11];
         regs[registers::RR1 as usize] = 1;
         regs[registers::RR2 as usize] = 1;
-        
+
         // This means 'Add RR1 and RR2 and put the result on RR3'
         let instr: u16 = 0b0001011001000010;
 
@@ -51,7 +49,7 @@ mod tests {
 
         let mut regs: [u16; 11] = [0; 11];
         regs[registers::RR1 as usize] = 3;
-        
+
         // This means 'Add RR1 and an imm5 and put the result on RR3'
         let instr: u16 = 0b0001011001100111;
 

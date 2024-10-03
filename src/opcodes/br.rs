@@ -1,10 +1,7 @@
-use crate::registers;
 use super::utils;
+use crate::registers;
 
-
-
-
-pub fn br (instr: u16, regs: &mut [u16; 11]) {
+pub fn br(instr: u16, regs: &mut [u16; 11]) {
     // PCoffset (9 bits)
     let pc_offset = utils::sign_extend(instr & 0x1FF, 9);
     let cond_flag = (instr >> 9) & 0x7;
@@ -18,12 +15,11 @@ pub fn br (instr: u16, regs: &mut [u16; 11]) {
 
 #[cfg(test)]
 mod tests {
+    use super::super::super::registers;
+    use super::br;
     use crate::add::add;
     use crate::and::and;
     use crate::condition_flags;
-    use super::br;
-    use super::super::super::registers;
-
 
     #[test]
     fn test_01() {
@@ -32,7 +28,7 @@ mod tests {
         let mut regs: [u16; 11] = [0; 11];
         regs[registers::RR1 as usize] = 0;
         regs[registers::RR2 as usize] = 0;
-        
+
         // This means 'Add RR1 and RR2 and put the result on RR3'
         let add_instr: u16 = 0b0001011001000010;
         add(add_instr, &mut regs);
@@ -52,7 +48,7 @@ mod tests {
         let mut regs: [u16; 11] = [0; 11];
         regs[registers::RR1 as usize] = 1;
         regs[registers::RR2 as usize] = 4;
-        
+
         // This means 'Add RR1 and RR2 and put the result on RR3'
         let add_instr: u16 = 0b0001011001000010;
         add(add_instr, &mut regs);
@@ -72,7 +68,7 @@ mod tests {
         let mut regs: [u16; 11] = [0; 11];
         regs[registers::RR1 as usize] = 162;
         regs[registers::RR2 as usize] = 0;
-        
+
         // This means 'Add RR1 and RR2 and put the result on RR3'
         let add_instr: u16 = 0b0101011001000010;
         and(add_instr, &mut regs);
@@ -99,6 +95,6 @@ mod tests {
 
         assert_eq!(225, regs[registers::RPC as usize]);
     }
-    
+
     // Can't try the negative flag because could not perform a negative operation (unsigned 16)
 }
