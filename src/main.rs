@@ -4,6 +4,7 @@ pub mod opcodes;
 pub mod condition_flags;
 
 use std::env;
+use opcodes::opcodes_values;
 
 fn mem_read(param: u16) -> u16 {
 
@@ -51,47 +52,50 @@ fn main () {
         let op: u16 = get_opcode(instr);
 
         match op {
-            opcodes::OP_ADD => {
+            opcodes_values::OP_ADD => {
                 // Add impl
             },
-            opcodes::OP_AND => {
+            opcodes_values::OP_AND => {
                 // And impl
             },
-            opcodes::OP_NOT => {
+            opcodes_values::OP_NOT => {
                 // Not impl
             },
-            opcodes::OP_BR => {
+            opcodes_values::OP_BR => {
                 // Br impl
             },
-            opcodes::OP_JMP => {
+            opcodes_values::OP_JMP => {
                 // Jmp impl
             },
-            opcodes::OP_JSR => {
+            opcodes_values::OP_JSR => {
                 // Jsr impl
             },
-            opcodes::OP_LD => {
+            opcodes_values::OP_LD => {
                 // Ld impl
             },
-            opcodes::OP_LDI => {
+            opcodes_values::OP_LDI => {
                 // Ld impl
             },
-            opcodes::OP_LEA => {
+            opcodes_values::OP_LEA => {
                 // Lea impl
             },
-            opcodes::OP_ST => {
+            opcodes_values::OP_ST => {
                 // St impl
             },
-            opcodes::OP_STI => {
+            opcodes_values::OP_STI => {
                 // Sti impl
             },
-            opcodes::OP_STR => {
+            opcodes_values::OP_STR => {
                 // Str impl
             },
-            opcodes::OP_TRAP => {
+            opcodes_values::OP_TRAP => {
                 // Trap impl
             },
-            opcodes::OP_RTI => {
-                // Trap impl
+            opcodes_values::OP_RTI => {
+                // Rti impl - Should not be used
+            },
+            opcodes_values::OP_RES => {
+                // Res impl - Should not be used
             },
             _ => {
 
