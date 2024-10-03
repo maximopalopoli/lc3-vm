@@ -1,23 +1,4 @@
-use super::super::condition_flags;
-use super::super::registers;
-
-fn sign_extend(mut x: u16, bit_count: i32) -> u16 {
-    if (x >> (bit_count - 1) & 1) != 0 {
-        x |= 0xFFFF << bit_count;
-    }
-    x
-}
-
-fn update_flags(r: u16, regs: &mut [u16; 11]) {
-    if regs[r as usize] == 0 {
-        regs[registers::RCOND as usize] = condition_flags::FL_ZRO;
-    } else if regs[r as usize] >> 15 == 1 {
-        // a 1 in the left-most bit indicates negative
-        regs[registers::RCOND as usize] = condition_flags::FL_NEG;
-    } else {
-        regs[registers::RCOND as usize] = condition_flags::FL_POS;
-    }
-}
+use super::utils;
 
 pub fn add(instr: u16, regs: &mut [u16; 11]) {
     // destination register (DR)
@@ -31,14 +12,14 @@ pub fn add(instr: u16, regs: &mut [u16; 11]) {
 
     if imm_flag == 1 {
         // The five bits that we need to extend
-        let imm5 = sign_extend(instr & 0x1F, 5);
+        let imm5 = utils::sign_extend(instr & 0x1F, 5);
         regs[dest_reg as usize] = regs[sr1 as usize] + imm5;
     } else {
         let r2 = instr & 0x7;
         regs[dest_reg as usize] = regs[sr1 as usize] + regs[r2 as usize];
     }
 
-    update_flags(dest_reg, regs);
+    utils::update_flags(dest_reg, regs);
 }
 
 
@@ -79,5 +60,5 @@ mod tests {
         assert_eq!(10, regs[registers::RR3 as usize]);
     }
 
-    // Other tests: try an overflow
+    // Other tests: try an overflow, see flag updates
 }
