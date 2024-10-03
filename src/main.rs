@@ -71,12 +71,17 @@ fn main() {
             }
             opcodes_values::OP_LD => {
                 // Ld impl
+                ld::ld(instr, &mut regs);
             }
             opcodes_values::OP_LDI => {
                 ldi::ldi(instr, &mut regs);
             }
+            opcodes_values::OP_LDR => {
+                ldr::ldr(instr, &mut regs);
+            }
             opcodes_values::OP_LEA => {
                 // Lea impl
+                lea::lea(instr, &mut regs);
             }
             opcodes_values::OP_ST => {
                 // St impl
