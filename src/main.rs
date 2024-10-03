@@ -7,8 +7,8 @@ use opcodes::opcodes_values;
 use opcodes::*;
 use std::env;
 
-fn mem_read(param: u16) -> u16 {
-    16
+fn mem_read(direction: u16, memory: &mut [u16; memory::MEMORY_MAX]) -> &mut u16 {
+    &mut memory[direction as usize]
 }
 
 fn read_image(arg: &str) -> bool {
@@ -32,7 +32,7 @@ fn main() {
     }
 
     //@{Setup}
-    let memory: [u16; memory::MEMORY_MAX] = [0; memory::MEMORY_MAX];
+    let mut memory: [u16; memory::MEMORY_MAX] = [0; memory::MEMORY_MAX];
 
     let mut regs: [u16; 11] = [0; 11];
 
@@ -41,7 +41,7 @@ fn main() {
 
     let running = true;
     while running {
-        let instr: u16 = mem_read(*(regs.get_mut(registers::RPC as usize).unwrap()) + 1);
+        let instr: u16 = *mem_read(*(regs.get_mut(registers::RPC as usize).unwrap()) + 1, &mut memory);
 
         let op: u16 = instr >> 12;
 
@@ -71,13 +71,13 @@ fn main() {
             }
             opcodes_values::OP_LD => {
                 // Ld impl
-                ld::ld(instr, &mut regs);
+                ld::ld(instr, &mut regs, &mut memory);
             }
             opcodes_values::OP_LDI => {
-                ldi::ldi(instr, &mut regs);
+                ldi::ldi(instr, &mut regs, &mut memory);
             }
             opcodes_values::OP_LDR => {
-                ldr::ldr(instr, &mut regs);
+                ldr::ldr(instr, &mut regs, &mut memory);
             }
             opcodes_values::OP_LEA => {
                 // Lea impl

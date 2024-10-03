@@ -11,8 +11,6 @@ pub mod ldi;
 pub mod ldr;
 pub mod lea;
 pub mod not;
-pub mod res;
-pub mod rti;
 pub mod st;
 pub mod sti;
 pub mod str;

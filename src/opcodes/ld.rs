@@ -1,8 +1,9 @@
 use super::utils;
 use crate::mem_read;
+use crate::memory;
 use crate::registers;
 
-pub fn ld(instr: u16, regs: &mut [u16; 11]) {
+pub fn ld(instr: u16, regs: &mut [u16; 11], memory: &mut [u16; memory::MEMORY_MAX]) {
     // destination register (DR)
     let dest_reg = (instr >> 9) & 0x7;
 
@@ -10,7 +11,7 @@ pub fn ld(instr: u16, regs: &mut [u16; 11]) {
     let pc_offset = utils::sign_extend(instr & 0x1FF, 9);
 
     // add pc_offset to the current PC, look at that memory location and put that data in the destination register
-    regs[dest_reg as usize] = mem_read(regs[registers::RPC as usize] + pc_offset);
+    regs[dest_reg as usize] = *mem_read(regs[registers::RPC as usize] + pc_offset, memory);
     utils::update_flags(dest_reg, regs);
 }
 
