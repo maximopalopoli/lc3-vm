@@ -63,9 +63,11 @@ fn main() {
             }
             opcodes_values::OP_JMP => {
                 // Jmp impl
+                jmp::jmp(instr, &mut regs);
             }
             opcodes_values::OP_JSR => {
                 // Jsr impl
+                jsr::jsr(instr, &mut regs);
             }
             opcodes_values::OP_LD => {
                 // Ld impl

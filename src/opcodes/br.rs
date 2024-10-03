@@ -35,6 +35,7 @@ mod tests {
 
         assert!(regs[registers::RCOND as usize] == condition_flags::FL_ZRO);
 
+        // This means 'If last operation left flag zero, then increment PC in an PCoffset'
         let br_instr = 0b0000010001100000;
         br(br_instr, &mut regs);
 
@@ -55,6 +56,7 @@ mod tests {
 
         assert!(regs[registers::RCOND as usize] == condition_flags::FL_POS);
 
+        // This means 'If last operation left flag positive, then increment PC in an PCoffset'
         let br_instr = 0b0000001001000001;
         br(br_instr, &mut regs);
 
@@ -75,6 +77,7 @@ mod tests {
 
         assert!(regs[registers::RCOND as usize] == condition_flags::FL_ZRO);
 
+        // This means 'If last operation left flag negative or zero, then increment PC in an PCoffset'
         let br_instr = 0b0000110001100001;
         br(br_instr, &mut regs);
 
@@ -90,6 +93,7 @@ mod tests {
         // Set a value bc can be initialized with garbage
         regs[registers::RCOND as usize] = condition_flags::FL_POS;
 
+        // This means 'Increment PC in an PCoffset, no matter what happened in last operation'
         let br_instr = 0b0000111011100001;
         br(br_instr, &mut regs);
 
