@@ -16,7 +16,6 @@ pub fn st(instr: u16, regs: &mut [u16; 11], memory: &mut [u16; memory::MEMORY_MA
     let val: u32 = regs[registers::RPC as usize] as u32 + pc_offset as u32;
     let val: u16 = val as u16;
 
-
     mem_write(val, memory, regs[source_reg as usize]);
 }
 

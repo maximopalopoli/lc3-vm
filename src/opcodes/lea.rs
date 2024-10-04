@@ -8,8 +8,10 @@ pub fn lea(instr: u16, regs: &mut [u16; 11]) {
     // PCoffset (9 bits)
     let pc_offset = utils::sign_extend(instr & 0x1FF, 9);
 
+    let val: u32 = regs[registers::RPC as usize] as u32 + pc_offset as u32;
+
     // add pc_offset to the current PC, and put that direction in the destination register
-    regs[dest_reg as usize] = regs[registers::RPC as usize] + pc_offset;
+    regs[dest_reg as usize] = val as u16;
     utils::update_flags(dest_reg, regs);
 }
 

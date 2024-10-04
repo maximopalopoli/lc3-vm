@@ -11,11 +11,13 @@ pub fn sti(instr: u16, regs: &mut [u16; 11], memory: &mut [u16; memory::MEMORY_M
     // PCoffset (9 bits)
     let pc_offset = utils::sign_extend(instr & 0x1FF, 9);
 
-    mem_write(
-        mem_read(regs[registers::RPC as usize] + pc_offset, memory),
-        memory, regs[source_reg as usize]);
-    // add pc_offset to the current PC, look at the direction at that direction, and put that data in the source register
-    regs[source_reg as usize] = regs[registers::RPC as usize] + pc_offset;
+    let val: u32 = regs[registers::RPC as usize] as u32 + pc_offset as u32;
+    let val: u16 = val as u16;
+
+    // This is the difference between STI and ST
+    let address = mem_read(val, memory) as usize;
+
+    mem_write(address as u16, memory, regs[source_reg as usize]);
 }
 
 #[cfg(test)]

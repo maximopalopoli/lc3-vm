@@ -1,5 +1,5 @@
 use super::utils;
-use crate::{mem_read, mem_write, memory};
+use crate::{mem_write, memory};
 
 pub fn str(instr: u16, regs: &mut [u16; 11], memory: &mut [u16; memory::MEMORY_MAX]) {
     // destination register (DR)
