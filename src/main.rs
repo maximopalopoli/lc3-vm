@@ -33,6 +33,61 @@ fn handle_keyboard(memory: &mut [u16; memory::MEMORY_MAX]) {
     }
 }
 
+fn execute_instruction(instr: u16, regs: &mut [u16; 11], memory: &mut [u16; memory::MEMORY_MAX]) {
+    let op: u16 = instr >> 12;
+
+    match op {
+        opcodes_values::OP_ADD => {
+            add::add(instr, regs);
+        }
+        opcodes_values::OP_AND => {
+            and::and(instr, regs);
+        }
+        opcodes_values::OP_NOT => {
+            not::not(instr, regs);
+        }
+        opcodes_values::OP_BR => {
+            br::br(instr, regs);
+        }
+        opcodes_values::OP_JMP => {
+            jmp::jmp(instr, regs);
+        }
+        opcodes_values::OP_JSR => {
+            jsr::jsr(instr, regs);
+        }
+        opcodes_values::OP_LD => {
+            ld::ld(instr, regs, memory);
+        }
+        opcodes_values::OP_LDI => {
+            ldi::ldi(instr, regs, memory);
+        }
+        opcodes_values::OP_LDR => {
+            ldr::ldr(instr, regs, memory);
+        }
+        opcodes_values::OP_LEA => {
+            lea::lea(instr, regs);
+        }
+        opcodes_values::OP_ST => {
+            st::st(instr, regs, memory);
+        }
+        opcodes_values::OP_STI => {
+            sti::sti(instr, regs, memory);
+        }
+        opcodes_values::OP_STR => {
+            str::str(instr, regs, memory);
+        }
+        opcodes_values::OP_TRAP => {
+            trap::trap(instr, regs, memory);
+        }
+        opcodes_values::OP_RTI => {
+            // Rti impl - Should not be used
+        }
+        opcodes_values::OP_RES => {
+            // Res impl - Should not be used
+        }
+        _ => {}
+    }
+}
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -74,79 +129,25 @@ fn main() {
     regs[registers::RCOND as usize] = condition_flags::FL_ZRO;
     regs[registers::RPC as usize] = registers::PC_START;
 
-    let running = true;
-    while running {
-        let instr: u16 = mem_read(
-            *(regs.get_mut(registers::RPC as usize).unwrap()) + 1,
-            &mut memory,
-        );
+    println!("Regs: {}, and mem: {}", regs[registers::RPC as usize], memory::MEMORY_MAX);
+    while (regs[registers::RPC as usize] as usize) < memory::MEMORY_MAX {
 
-        let op: u16 = instr >> 12;
+        // Read instruction
+        let instruction = mem_read(regs[registers::RPC as usize], &mut memory);
+        println!("Registers: {:?}", regs);
+        println!("Memory: {:?}", &memory[regs[registers::RPC as usize] as usize]);
 
-        match op {
-            opcodes_values::OP_ADD => {
-                // Add impl
-                add::add(instr, &mut regs);
-            }
-            opcodes_values::OP_AND => {
-                // And impl
-                and::and(instr, &mut regs);
-            }
-            opcodes_values::OP_NOT => {
-                // Not impl
-                not::not(instr, &mut regs);
-            }
-            opcodes_values::OP_BR => {
-                // Br impl
-                br::br(instr, &mut regs);
-            }
-            opcodes_values::OP_JMP => {
-                // Jmp impl
-                jmp::jmp(instr, &mut regs);
-            }
-            opcodes_values::OP_JSR => {
-                // Jsr impl
-                jsr::jsr(instr, &mut regs);
-            }
-            opcodes_values::OP_LD => {
-                // Ld impl
-                ld::ld(instr, &mut regs, &mut memory);
-            }
-            opcodes_values::OP_LDI => {
-                ldi::ldi(instr, &mut regs, &mut memory);
-            }
-            opcodes_values::OP_LDR => {
-                ldr::ldr(instr, &mut regs, &mut memory);
-            }
-            opcodes_values::OP_LEA => {
-                // Lea impl
-                lea::lea(instr, &mut regs);
-            }
-            opcodes_values::OP_ST => {
-                // St impl
-                st::st(instr, &mut regs, &mut memory);
-            }
-            opcodes_values::OP_STI => {
-                // Sti impl
-                sti::sti(instr, &mut regs, &mut memory);
-            }
-            opcodes_values::OP_STR => {
-                // Str impl
-                str::str(instr, &mut regs, &mut memory);
-            }
-            opcodes_values::OP_TRAP => {
-                // Trap impl
-                trap::trap(instr, &mut regs, &mut memory);
-            }
-            opcodes_values::OP_RTI => {
-                // Rti impl - Should not be used
-            }
-            opcodes_values::OP_RES => {
-                // Res impl - Should not be used
-            }
-            _ => {}
-        }
+
+        // Increment program counter
+        regs[registers::RPC as usize] += 1;
+
+
+        // Extract op_code and execute operation
+        execute_instruction(instruction, &mut regs, &mut memory);
+
+//        println!("{:?}", memory);
     }
+
 
     // Shutdown
 }
