@@ -85,12 +85,15 @@ fn main() {
             }
             opcodes_values::OP_ST => {
                 // St impl
+                st::st(instr, &mut regs, &mut memory);
             }
             opcodes_values::OP_STI => {
                 // Sti impl
+                sti::sti(instr, &mut regs, &mut memory);
             }
             opcodes_values::OP_STR => {
                 // Str impl
+                
             }
             opcodes_values::OP_TRAP => {
                 // Trap impl
