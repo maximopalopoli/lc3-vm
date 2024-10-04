@@ -16,7 +16,6 @@ pub fn sti(instr: u16, regs: &mut [u16; 11], memory: &mut [u16; memory::MEMORY_M
         memory, regs[source_reg as usize]);
     // add pc_offset to the current PC, look at the direction at that direction, and put that data in the source register
     regs[source_reg as usize] = regs[registers::RPC as usize] + pc_offset;
-    utils::update_flags(source_reg, regs);
 }
 
 #[cfg(test)]

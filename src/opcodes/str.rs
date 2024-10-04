@@ -11,10 +11,12 @@ pub fn str(instr: u16, regs: &mut [u16; 11], memory: &mut [u16; memory::MEMORY_M
     // PCoffset (9 bits)
     let pc_offset = utils::sign_extend(instr & 0x3F, 6);
 
-    // add pc_offset to the content of a base register, look at that memory location and put there the data in the destination register
-    mem_write(regs[base_reg as usize] + pc_offset, memory, regs[dest_reg as usize]);
 
-    utils::update_flags(dest_reg, regs);
+    let address: u32 = regs[base_reg as usize] as u32 + pc_offset as u32;
+    let address: u16 = address as u16;
+
+    // add pc_offset to the content of a base register, look at that memory location and put there the data in the destination register
+    mem_write(address, memory, regs[dest_reg as usize]);
 }
 
 #[cfg(test)]

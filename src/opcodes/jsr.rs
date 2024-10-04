@@ -10,7 +10,8 @@ pub fn jsr(instr: u16, regs: &mut [u16; 11]) {
         regs[registers::RPC as usize] = regs[base_reg as usize];
     } else {
         let extended_dir = utils::sign_extend(instr & 0x1FF, 11);
-        regs[registers::RPC as usize] += extended_dir;
+        let val: u32 = regs[registers::RPC as usize] as u32 + extended_dir as u32;
+        regs[registers::RPC as usize] = val as u16;
     }
 }
 

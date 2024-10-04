@@ -134,9 +134,9 @@ fn main() {
 
         // Read instruction
         let instruction = mem_read(regs[registers::RPC as usize], &mut memory);
-        println!("Registers: {:?}", regs);
+/*         println!("Registers: {:?}", regs);
         println!("Memory: {:?}", &memory[regs[registers::RPC as usize] as usize]);
-
+ */
 
         // Increment program counter
         regs[registers::RPC as usize] += 1;

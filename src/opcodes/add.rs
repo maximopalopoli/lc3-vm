@@ -13,10 +13,18 @@ pub fn add(instr: u16, regs: &mut [u16; 11]) {
     if imm_flag == 1 {
         // The five bits that we need to extend
         let imm5 = utils::sign_extend(instr & 0x1F, 5);
-        regs[dest_reg as usize] = regs[sr1 as usize] + imm5;
+
+        // This is declared as u32 to prevent from overflow.
+        let val: u32 = imm5 as u32 + regs[sr1 as usize] as u32;
+
+        // Set the result of the sum to the target register
+        regs[dest_reg as usize] = val as u16;
     } else {
         let r2 = instr & 0x7;
-        regs[dest_reg as usize] = regs[sr1 as usize] + regs[r2 as usize];
+        
+        let val: u32 = regs[dest_reg as usize] as u32 + regs[r2 as usize] as u32;
+
+        regs[dest_reg as usize] = val as u16;
     }
 
     utils::update_flags(dest_reg, regs);

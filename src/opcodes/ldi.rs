@@ -10,11 +10,10 @@ pub fn ldi(instr: u16, regs: &mut [u16; 11], memory: &mut [u16; memory::MEMORY_M
     // PCoffset (9 bits)
     let pc_offset = utils::sign_extend(instr & 0x1FF, 9);
 
+    let address_read = mem_read(regs[registers::RPC as usize] + pc_offset, memory);
+
     // add pc_offset to the current PC, look at that memory location to get the final address
-    regs[r0 as usize] = mem_read(
-        mem_read(regs[registers::RPC as usize] + pc_offset, memory),
-        memory,
-    );
+    regs[r0 as usize] = mem_read(address_read, memory,);
     utils::update_flags(r0, regs);
 }
 

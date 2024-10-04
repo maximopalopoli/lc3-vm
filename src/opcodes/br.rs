@@ -9,7 +9,8 @@ pub fn br(instr: u16, regs: &mut [u16; 11]) {
     // If a flag is set and the br op has that flag activated, enters the block
     if cond_flag & regs[registers::RCOND as usize] != 0 {
         // Set the PC to go to the extended PCoffset
-        regs[registers::RPC as usize] += pc_offset;
+        let val: u32 = regs[registers::RPC as usize] as u32 + pc_offset as u32;
+        regs[registers::RPC as usize] = val as u16;
     }
 }
 
