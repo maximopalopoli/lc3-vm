@@ -5,15 +5,34 @@ pub mod registers;
 
 use opcodes::opcodes_values;
 use opcodes::*;
-use std::env;
+use std::io::Read;
+use std::{env, fs::File, io::BufReader};
 
-fn mem_read(direction: u16, memory: &mut [u16; memory::MEMORY_MAX]) -> &mut u16 {
-    &mut memory[direction as usize]
+use byteorder::{BigEndian, ReadBytesExt};
+
+
+fn mem_write(address: u16, memory: &mut [u16; memory::MEMORY_MAX], value: u16) {
+    memory[address as usize] = value;
 }
 
-fn read_image(arg: &str) -> bool {
-    true
+fn mem_read(address: u16, memory: &mut [u16; memory::MEMORY_MAX]) -> u16 {
+    if address == memory::MR_KBSR as u16 {
+        handle_keyboard(memory);
+    }
+    memory[address as usize]
 }
+
+fn handle_keyboard(memory: &mut [u16; memory::MEMORY_MAX]) {
+    let mut buffer = [0; 1];
+    std::io::stdin().read_exact(&mut buffer).unwrap();
+    if buffer[0] != 0 {
+        mem_write(memory::MR_KBSR,memory, 1 << 15);
+        mem_write(memory::MR_KBDR,memory, buffer[0] as u16);
+    } else {
+        mem_write(memory::MR_KBSR,memory, 0)
+    }
+}
+
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -23,25 +42,41 @@ fn main() {
         //exit(2);
     }
 
-    for arg in args {
-        if !read_image(&arg) {
-            println!("failed to load image: {}", arg);
-            return;
-            // exit(1)
-        }
-    }
+    let f = File::open(args[1].clone()).expect("couldn't open file");
+    let mut file = BufReader::new(f);
+
+    // Note how we're using `read_u16` _and_ BigEndian to read the binary file.
+    let mut base_address = file.read_u16::<BigEndian>().expect("error");
 
     //@{Setup}
     let mut memory: [u16; memory::MEMORY_MAX] = [0; memory::MEMORY_MAX];
+
+    loop {
+        match file.read_u16::<BigEndian>() {
+            Ok(instruction) => {
+                mem_write(base_address, &mut memory, instruction);
+                base_address += 1;
+            }
+            Err(e) => {
+                if e.kind() == std::io::ErrorKind::UnexpectedEof {
+                    println!("OK")
+                } else {
+                    println!("failed: {}", e);
+                }
+                break;
+            }
+        }
+    }
 
     let mut regs: [u16; 11] = [0; 11];
 
     // Set as Zero bc can be initialized with garbage
     regs[registers::RCOND as usize] = condition_flags::FL_ZRO;
+    regs[registers::RPC as usize] = registers::PC_START;
 
     let running = true;
     while running {
-        let instr: u16 = *mem_read(
+        let instr: u16 = mem_read(
             *(regs.get_mut(registers::RPC as usize).unwrap()) + 1,
             &mut memory,
         );

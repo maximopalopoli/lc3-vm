@@ -1,5 +1,6 @@
 use super::utils;
 use crate::mem_read;
+use crate::mem_write;
 use crate::memory;
 use crate::registers;
 
@@ -10,7 +11,7 @@ pub fn st(instr: u16, regs: &mut [u16; 11], memory: &mut [u16; memory::MEMORY_MA
     // PCoffset (9 bits)
     let pc_offset = utils::sign_extend(instr & 0x1FF, 9);
 
-    *mem_read(regs[registers::RPC as usize] + pc_offset, memory) = regs[source_reg as usize];
+    mem_write(regs[registers::RPC as usize] + pc_offset, memory, regs[source_reg as usize]);
     // add pc_offset to the current PC, look at that memory location and put that data in the source register
     regs[source_reg as usize] = regs[registers::RPC as usize] + pc_offset;
     utils::update_flags(source_reg, regs);

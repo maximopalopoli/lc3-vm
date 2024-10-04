@@ -40,13 +40,13 @@ pub fn trap(instr: u16, regs: &mut [u16; 11], memory: &mut [u16; memory::MEMORY_
             // Write a string of ASCII characters to the console display.
 
             let mut index = regs[registers::RR0 as usize];
-            let mut c = *mem_read(index, memory);
+            let mut c = mem_read(index, memory);
 
             // 0x0000 is a the NULL character equivalent
             while c != 0x0000 {
                 print!("{}", (c as u8) as char);
                 index += 1;
-                c = *mem_read(index, memory);
+                c = mem_read(index, memory);
             }
             io::stdout().flush().expect("failed to flush");
         }
@@ -71,7 +71,7 @@ pub fn trap(instr: u16, regs: &mut [u16; 11], memory: &mut [u16; memory::MEMORY_
             // Write a string of ASCII characters to the console in parts (first half, second half)
 
             let mut index = regs[registers::RR0 as usize];
-            let mut c = *mem_read(index, memory);
+            let mut c = mem_read(index, memory);
 
             // 0x0000 is a the NULL character equivalent
             while c != 0x0000 {
@@ -82,7 +82,7 @@ pub fn trap(instr: u16, regs: &mut [u16; 11], memory: &mut [u16; memory::MEMORY_
                     print!("{}", (char_2 as u8) as char);
                 }
                 index += 1;
-                c = *mem_read(index, memory);
+                c = mem_read(index, memory);
             }
             io::stdout().flush().expect("failed to flush");
         }

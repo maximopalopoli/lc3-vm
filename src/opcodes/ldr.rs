@@ -12,7 +12,7 @@ pub fn ldr(instr: u16, regs: &mut [u16; 11], memory: &mut [u16; memory::MEMORY_M
     let pc_offset = utils::sign_extend(instr & 0x3F, 6);
 
     // add pc_offset to the content of a base register, look at that memory location and put that data in the destination register
-    regs[dest_reg as usize] = *mem_read(regs[base_reg as usize] + pc_offset, memory);
+    regs[dest_reg as usize] = mem_read(regs[base_reg as usize] + pc_offset, memory);
 
     utils::update_flags(dest_reg, regs);
 }
