@@ -7,8 +7,8 @@ use opcodes::opcodes_values;
 use opcodes::*;
 use std::env;
 
-fn mem_read(param: u16) -> u16 {
-    16
+fn mem_read(direction: u16, memory: &mut [u16; memory::MEMORY_MAX]) -> &mut u16 {
+    &mut memory[direction as usize]
 }
 
 fn read_image(arg: &str) -> bool {
@@ -32,7 +32,7 @@ fn main() {
     }
 
     //@{Setup}
-    let memory: [u16; memory::MEMORY_MAX] = [0; memory::MEMORY_MAX];
+    let mut memory: [u16; memory::MEMORY_MAX] = [0; memory::MEMORY_MAX];
 
     let mut regs: [u16; 11] = [0; 11];
 
@@ -41,7 +41,10 @@ fn main() {
 
     let running = true;
     while running {
-        let instr: u16 = mem_read(*(regs.get_mut(registers::RPC as usize).unwrap()) + 1);
+        let instr: u16 = *mem_read(
+            *(regs.get_mut(registers::RPC as usize).unwrap()) + 1,
+            &mut memory,
+        );
 
         let op: u16 = instr >> 12;
 
@@ -56,6 +59,7 @@ fn main() {
             }
             opcodes_values::OP_NOT => {
                 // Not impl
+                not::not(instr, &mut regs);
             }
             opcodes_values::OP_BR => {
                 // Br impl
@@ -63,30 +67,41 @@ fn main() {
             }
             opcodes_values::OP_JMP => {
                 // Jmp impl
+                jmp::jmp(instr, &mut regs);
             }
             opcodes_values::OP_JSR => {
                 // Jsr impl
+                jsr::jsr(instr, &mut regs);
             }
             opcodes_values::OP_LD => {
                 // Ld impl
+                ld::ld(instr, &mut regs, &mut memory);
             }
             opcodes_values::OP_LDI => {
-                ldi::ldi(instr, &mut regs);
+                ldi::ldi(instr, &mut regs, &mut memory);
+            }
+            opcodes_values::OP_LDR => {
+                ldr::ldr(instr, &mut regs, &mut memory);
             }
             opcodes_values::OP_LEA => {
                 // Lea impl
+                lea::lea(instr, &mut regs);
             }
             opcodes_values::OP_ST => {
                 // St impl
+                st::st(instr, &mut regs, &mut memory);
             }
             opcodes_values::OP_STI => {
                 // Sti impl
+                sti::sti(instr, &mut regs, &mut memory);
             }
             opcodes_values::OP_STR => {
                 // Str impl
+                str::str(instr, &mut regs, &mut memory);
             }
             opcodes_values::OP_TRAP => {
                 // Trap impl
+                trap::trap(instr, &mut regs, &mut memory);
             }
             opcodes_values::OP_RTI => {
                 // Rti impl - Should not be used
