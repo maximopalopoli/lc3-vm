@@ -4,15 +4,11 @@ pub mod opcodes;
 pub mod registers;
 
 use opcodes::opcodes_values;
+use opcodes::*;
 use std::env;
 
 fn mem_read(param: u16) -> u16 {
     16
-}
-
-fn get_opcode(instr: u16) -> u16 {
-    //let op: u16 = instr >> 12;
-    0
 }
 
 fn read_image(arg: &str) -> bool {
@@ -39,27 +35,31 @@ fn main() {
     let memory: [u16; memory::MEMORY_MAX] = [0; memory::MEMORY_MAX];
 
     let mut regs: [u16; 11] = [0; 11];
-    let reg_ref = &mut regs[registers::RCOND as usize];
-    *reg_ref = condition_flags::FL_ZRO;
+
+    // Set as Zero bc can be initialized with garbage
+    regs[registers::RCOND as usize] = condition_flags::FL_ZRO;
 
     let running = true;
     while running {
         let instr: u16 = mem_read(*(regs.get_mut(registers::RPC as usize).unwrap()) + 1);
 
-        let op: u16 = get_opcode(instr);
+        let op: u16 = instr >> 12;
 
         match op {
             opcodes_values::OP_ADD => {
                 // Add impl
+                add::add(instr, &mut regs);
             }
             opcodes_values::OP_AND => {
                 // And impl
+                and::and(instr, &mut regs);
             }
             opcodes_values::OP_NOT => {
                 // Not impl
             }
             opcodes_values::OP_BR => {
                 // Br impl
+                br::br(instr, &mut regs);
             }
             opcodes_values::OP_JMP => {
                 // Jmp impl
@@ -71,7 +71,7 @@ fn main() {
                 // Ld impl
             }
             opcodes_values::OP_LDI => {
-                // Ld impl
+                ldi::ldi(instr, &mut regs);
             }
             opcodes_values::OP_LEA => {
                 // Lea impl

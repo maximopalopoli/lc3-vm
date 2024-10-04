@@ -1,4 +1,5 @@
 pub mod opcodes_values;
+pub mod utils;
 
 pub mod add;
 pub mod and;
