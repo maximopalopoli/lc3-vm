@@ -97,6 +97,7 @@ fn main() {
             }
             opcodes_values::OP_TRAP => {
                 // Trap impl
+                trap::trap(instr, &mut regs, &mut memory);
             }
             opcodes_values::OP_RTI => {
                 // Rti impl - Should not be used
