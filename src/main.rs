@@ -93,7 +93,7 @@ fn main() {
             }
             opcodes_values::OP_STR => {
                 // Str impl
-                
+                str::str(instr, &mut regs, &mut memory);
             }
             opcodes_values::OP_TRAP => {
                 // Trap impl

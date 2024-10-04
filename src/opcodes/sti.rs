@@ -27,7 +27,7 @@ mod tests {
 
     #[test]
     fn test_01() {
-        // sti puts in the memory direction defined by the offset the content of the source register
+        // sti puts in the memory direction placed in the memory direction defined by the offset the content of the source register
 
         let mut regs: [u16; 11] = [0; 11];
         let mut memory: [u16; memory::MEMORY_MAX] = [0; memory::MEMORY_MAX];
@@ -46,9 +46,6 @@ mod tests {
         // This means 'Put at source register the content of offset direction of memory'
         let ld_instr: u16 = 0b0010011000010000;
         ld(ld_instr, &mut regs, &mut memory);
-
-        println!("{:?}", &memory[..20]);
-        println!("{:?}", regs);
 
         assert_eq!(47, regs[registers::RR3 as usize]);
     } // This test is similar to the thing I would test with de load type instructions
