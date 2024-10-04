@@ -41,7 +41,10 @@ fn main() {
 
     let running = true;
     while running {
-        let instr: u16 = *mem_read(*(regs.get_mut(registers::RPC as usize).unwrap()) + 1, &mut memory);
+        let instr: u16 = *mem_read(
+            *(regs.get_mut(registers::RPC as usize).unwrap()) + 1,
+            &mut memory,
+        );
 
         let op: u16 = instr >> 12;
 
@@ -56,6 +59,7 @@ fn main() {
             }
             opcodes_values::OP_NOT => {
                 // Not impl
+                not::not(instr, &mut regs);
             }
             opcodes_values::OP_BR => {
                 // Br impl

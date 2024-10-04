@@ -1,7 +1,7 @@
 use super::utils;
+use crate::mem_read;
 use crate::memory;
 use crate::registers;
-use crate::mem_read;
 
 pub fn sti(instr: u16, regs: &mut [u16; 11], memory: &mut [u16; memory::MEMORY_MAX]) {
     // source register (SR)
@@ -10,20 +10,22 @@ pub fn sti(instr: u16, regs: &mut [u16; 11], memory: &mut [u16; memory::MEMORY_M
     // PCoffset (9 bits)
     let pc_offset = utils::sign_extend(instr & 0x1FF, 9);
 
-    *mem_read(*mem_read(regs[registers::RPC as usize] + pc_offset, memory), memory) = regs[source_reg as usize];
+    *mem_read(
+        *mem_read(regs[registers::RPC as usize] + pc_offset, memory),
+        memory,
+    ) = regs[source_reg as usize];
     // add pc_offset to the current PC, look at the direction at that direction, and put that data in the source register
     regs[source_reg as usize] = regs[registers::RPC as usize] + pc_offset;
     utils::update_flags(source_reg, regs);
 }
-
 
 #[cfg(test)]
 mod tests {
     use super::super::super::registers;
     use super::sti;
     use crate::ld::ld;
-    use crate::st::st;
     use crate::memory;
+    use crate::st::st;
 
     #[test]
     fn test_01() {
@@ -50,4 +52,3 @@ mod tests {
         assert_eq!(47, regs[registers::RR3 as usize]);
     } // This test is similar to the thing I would test with de load type instructions
 }
-

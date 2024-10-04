@@ -2,8 +2,7 @@ use crate::registers;
 
 use super::utils;
 
-
-pub fn jsr (instr: u16, regs: &mut [u16; 11]) {
+pub fn jsr(instr: u16, regs: &mut [u16; 11]) {
     regs[registers::RR7 as usize] = regs[registers::RPC as usize];
     let long_flag = (instr >> 11) & 1;
     if long_flag == 0 {
@@ -14,7 +13,6 @@ pub fn jsr (instr: u16, regs: &mut [u16; 11]) {
         regs[registers::RPC as usize] += extended_dir;
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -61,4 +59,3 @@ mod tests {
         assert_eq!(40, regs[registers::RPC as usize]);
     }
 }
-

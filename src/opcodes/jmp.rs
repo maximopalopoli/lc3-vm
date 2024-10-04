@@ -1,11 +1,9 @@
 use crate::registers;
 
-
-pub fn jmp (instr: u16, regs: &mut [u16; 11]) {
+pub fn jmp(instr: u16, regs: &mut [u16; 11]) {
     let base_reg = (instr >> 6) & 0x7;
     regs[registers::RPC as usize] = regs[base_reg as usize];
 }
-
 
 #[cfg(test)]
 mod tests {

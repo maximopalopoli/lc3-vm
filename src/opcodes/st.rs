@@ -1,7 +1,7 @@
 use super::utils;
+use crate::mem_read;
 use crate::memory;
 use crate::registers;
-use crate::mem_read;
 
 pub fn st(instr: u16, regs: &mut [u16; 11], memory: &mut [u16; memory::MEMORY_MAX]) {
     // source register (SR)

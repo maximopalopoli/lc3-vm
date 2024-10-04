@@ -1,6 +1,6 @@
 use super::utils;
 
-fn not(instr: u16, regs: &mut [u16; 11]) {
+pub fn not(instr: u16, regs: &mut [u16; 11]) {
     // destination register (DR)
     let dest_reg = (instr >> 9) & 0x7;
 
@@ -18,7 +18,7 @@ mod tests {
     use super::not;
 
     #[test]
-    fn test_01 () {
+    fn test_01() {
         // Not puts in a destination register the result of the not operation on the base register
 
         let mut regs: [u16; 11] = [0; 11];

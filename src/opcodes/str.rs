@@ -45,4 +45,3 @@ mod tests {
         assert_eq!(57, regs[registers::RR3 as usize]);
     } // This test is similar to the thing I would test with de load type instructions
 }
-
