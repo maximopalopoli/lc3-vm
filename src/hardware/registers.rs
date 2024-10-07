@@ -9,3 +9,5 @@ pub const RR7: u16 = 7;
 pub const RPC: u16 = 8;
 pub const RCOND: u16 = 9;
 pub const RCOUNT: u16 = 10;
+
+pub const PC_START: u16 = 0x3000;

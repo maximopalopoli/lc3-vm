@@ -1,18 +1,66 @@
-pub mod condition_flags;
-pub mod memory;
-pub mod opcodes;
-pub mod registers;
+pub mod hardware;
 
-use opcodes::opcodes_values;
-use opcodes::*;
-use std::env;
+use hardware::opcodes::opcodes_values;
+use hardware::opcodes::*;
+use hardware::vm::VM;
+use std::{env, fs::File, io::BufReader};
 
-fn mem_read(direction: u16, memory: &mut [u16; memory::MEMORY_MAX]) -> &mut u16 {
-    &mut memory[direction as usize]
-}
+use byteorder::{BigEndian, ReadBytesExt};
 
-fn read_image(arg: &str) -> bool {
-    true
+fn execute_instruction(instr: u16, vm: &mut VM) {
+    let op: u16 = instr >> 12;
+
+    match op {
+        opcodes_values::OP_ADD => {
+            add::add(instr, vm);
+        }
+        opcodes_values::OP_AND => {
+            and::and(instr, vm);
+        }
+        opcodes_values::OP_NOT => {
+            not::not(instr, vm);
+        }
+        opcodes_values::OP_BR => {
+            br::br(instr, vm);
+        }
+        opcodes_values::OP_JMP => {
+            jmp::jmp(instr, vm);
+        }
+        opcodes_values::OP_JSR => {
+            jsr::jsr(instr, vm);
+        }
+        opcodes_values::OP_LD => {
+            ld::ld(instr, vm);
+        }
+        opcodes_values::OP_LDI => {
+            ldi::ldi(instr, vm);
+        }
+        opcodes_values::OP_LDR => {
+            ldr::ldr(instr, vm);
+        }
+        opcodes_values::OP_LEA => {
+            lea::lea(instr, vm);
+        }
+        opcodes_values::OP_ST => {
+            st::st(instr, vm);
+        }
+        opcodes_values::OP_STI => {
+            sti::sti(instr, vm);
+        }
+        opcodes_values::OP_STR => {
+            str::str(instr, vm);
+        }
+        opcodes_values::OP_TRAP => {
+            trap::trap(instr, vm);
+        }
+        opcodes_values::OP_RTI => {
+            // Rti impl - Should not be used
+        }
+        opcodes_values::OP_RES => {
+            // Res impl - Should not be used
+        }
+        _ => {}
+    }
 }
 
 fn main() {
@@ -23,95 +71,56 @@ fn main() {
         //exit(2);
     }
 
-    for arg in args {
-        if !read_image(&arg) {
-            println!("failed to load image: {}", arg);
-            return;
-            // exit(1)
-        }
-    }
+    let f = File::open(args[1].clone()).expect("couldn't open file");
+    let mut file = BufReader::new(f);
+
+    // Note how we're using `read_u16` _and_ BigEndian to read the binary file.
+    let mut base_address = file.read_u16::<BigEndian>().expect("error");
 
     //@{Setup}
-    let mut memory: [u16; memory::MEMORY_MAX] = [0; memory::MEMORY_MAX];
+    let mut vm = VM::new();
 
-    let mut regs: [u16; 11] = [0; 11];
-
-    // Set as Zero bc can be initialized with garbage
-    regs[registers::RCOND as usize] = condition_flags::FL_ZRO;
-
-    let running = true;
-    while running {
-        let instr: u16 = *mem_read(
-            *(regs.get_mut(registers::RPC as usize).unwrap()) + 1,
-            &mut memory,
-        );
-
-        let op: u16 = instr >> 12;
-
-        match op {
-            opcodes_values::OP_ADD => {
-                // Add impl
-                add::add(instr, &mut regs);
+    loop {
+        match file.read_u16::<BigEndian>() {
+            Ok(instruction) => {
+                vm.mem_write(base_address, instruction);
+                base_address += 1;
             }
-            opcodes_values::OP_AND => {
-                // And impl
-                and::and(instr, &mut regs);
+            Err(e) => {
+                if e.kind() == std::io::ErrorKind::UnexpectedEof {
+                    println!("OK")
+                } else {
+                    println!("failed: {}", e);
+                }
+                break;
             }
-            opcodes_values::OP_NOT => {
-                // Not impl
-                not::not(instr, &mut regs);
-            }
-            opcodes_values::OP_BR => {
-                // Br impl
-                br::br(instr, &mut regs);
-            }
-            opcodes_values::OP_JMP => {
-                // Jmp impl
-                jmp::jmp(instr, &mut regs);
-            }
-            opcodes_values::OP_JSR => {
-                // Jsr impl
-                jsr::jsr(instr, &mut regs);
-            }
-            opcodes_values::OP_LD => {
-                // Ld impl
-                ld::ld(instr, &mut regs, &mut memory);
-            }
-            opcodes_values::OP_LDI => {
-                ldi::ldi(instr, &mut regs, &mut memory);
-            }
-            opcodes_values::OP_LDR => {
-                ldr::ldr(instr, &mut regs, &mut memory);
-            }
-            opcodes_values::OP_LEA => {
-                // Lea impl
-                lea::lea(instr, &mut regs);
-            }
-            opcodes_values::OP_ST => {
-                // St impl
-                st::st(instr, &mut regs, &mut memory);
-            }
-            opcodes_values::OP_STI => {
-                // Sti impl
-                sti::sti(instr, &mut regs, &mut memory);
-            }
-            opcodes_values::OP_STR => {
-                // Str impl
-                str::str(instr, &mut regs, &mut memory);
-            }
-            opcodes_values::OP_TRAP => {
-                // Trap impl
-                trap::trap(instr, &mut regs, &mut memory);
-            }
-            opcodes_values::OP_RTI => {
-                // Rti impl - Should not be used
-            }
-            opcodes_values::OP_RES => {
-                // Res impl - Should not be used
-            }
-            _ => {}
         }
     }
 
-    // Shutdown
+    // Set as Zero bc can be initialized with garbage
+    vm.update_flags(hardware::condition_flags::FL_ZRO);
+    vm.update_register_value(hardware::registers::RPC, hardware::registers::PC_START);
+
+    println!(
+        "Regs: {}, and mem: {}",
+        vm.get_register_value(hardware::registers::RPC),
+        hardware::memory::MEMORY_MAX
+    );
+    while (vm.get_register_value(hardware::registers::RPC) as usize) < hardware::memory::MEMORY_MAX
+    {
+        // Read instruction
+        let instruction = vm.mem_read(vm.get_register_value(hardware::registers::RPC));
+        /*         println!("Registers: {:?}", regs);
+               println!("Memory: {:?}", &memory[regs[hardware::registers::RPC as usize] as usize]);
+        */
+
+        // Increment program counter
+        let current_pc = vm.get_register_value(hardware::registers::RPC);
+        vm.update_register_value(hardware::registers::RPC, current_pc + 1);
+
+        // Extract op_code and execute operation
+        execute_instruction(instruction, &mut vm);
+
+        //        println!("{:?}", memory);
+    }
 }
