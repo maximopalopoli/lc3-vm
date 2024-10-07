@@ -23,17 +23,18 @@ pub fn trap(instr: u16, regs: &mut [u16; 11], memory: &mut [u16; memory::MEMORY_
             //Read a single character from the keyboard. The character is not echoed onto the
             //console. Its ASCII code is copied into R0. The high eight bits of R0 are cleared.
 
-            let mut buf: [u8; 1] = [0; 1];
+            let mut buf = [0; 1];
             io::stdin().read_exact(&mut buf).unwrap();
             // Should handle unwrap
 
             regs[registers::RR0 as usize] = buf[0] as u16;
-            utils::update_flags(registers::RR0, regs);
+            //utils::update_flags(registers::RR0, regs);
         }
         TRAP_OUT => {
             //Write a character in R0 to the console display.
 
-            print!("{}", (regs[registers::RR0 as usize] as u8) as char);
+            let c = regs[registers::RR0 as usize] as u8;
+            print!("{}", c as char);
             io::stdout().flush().expect("failed to flush");
         }
         TRAP_PUTS => {
@@ -88,7 +89,8 @@ pub fn trap(instr: u16, regs: &mut [u16; 11], memory: &mut [u16; memory::MEMORY_
         }
         TRAP_HALT => {
             // Halts
-            io::stdout().flush().expect("Failed to flush");
+            println!("HALT detected");
+            io::stdout().flush().expect("failed to flush");
             process::exit(1);
         }
         _ => {
