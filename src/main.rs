@@ -7,10 +7,6 @@ use std::{env, fs::File, io::BufReader};
 
 use byteorder::{BigEndian, ReadBytesExt};
 
-
-
-
-
 fn execute_instruction(instr: u16, vm: &mut VM) {
     let op: u16 = instr >> 12;
 
@@ -101,17 +97,17 @@ fn main() {
         }
     }
 
-
     // Set as Zero bc can be initialized with garbage
     vm.update_flags(hardware::condition_flags::FL_ZRO);
     vm.update_register_value(hardware::registers::RPC, hardware::registers::PC_START);
-    
+
     println!(
         "Regs: {}, and mem: {}",
         vm.get_register_value(hardware::registers::RPC),
         hardware::memory::MEMORY_MAX
     );
-    while (vm.get_register_value(hardware::registers::RPC) as usize) < hardware::memory::MEMORY_MAX {
+    while (vm.get_register_value(hardware::registers::RPC) as usize) < hardware::memory::MEMORY_MAX
+    {
         // Read instruction
         let instruction = vm.mem_read(vm.get_register_value(hardware::registers::RPC));
         /*         println!("Registers: {:?}", regs);

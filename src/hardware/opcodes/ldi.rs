@@ -1,6 +1,6 @@
 use super::utils;
-use crate::hardware::vm::VM;
 use crate::hardware::registers;
+use crate::hardware::vm::VM;
 
 pub fn ldi(instr: u16, vm: &mut VM) {
     // destination register (DR)

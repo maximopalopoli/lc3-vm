@@ -1,38 +1,39 @@
+use super::condition_flags;
 use super::memory;
 use super::registers;
-use super::condition_flags;
 
 use std::io::Read;
 
-
-
 pub struct VM {
     memory: [u16; memory::MEMORY_MAX],
-    regs: [u16; 11]
+    regs: [u16; 11],
+}
+
+impl Default for VM {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl VM {
     pub fn new() -> Self {
         let memory: [u16; memory::MEMORY_MAX] = [0; memory::MEMORY_MAX];
         let regs: [u16; 11] = [0; 11];
-        VM {
-            memory,
-            regs
-        }
+        VM { memory, regs }
     }
 
     pub fn mem_write(&mut self, address: u16, value: u16) {
         self.memory[address as usize] = value;
     }
-    
+
     pub fn mem_read(&mut self, address: u16) -> u16 {
         if address == memory::MR_KBSR {
             self.handle_keyboard();
         }
         self.memory[address as usize]
     }
-    
-    fn handle_keyboard(&mut self, ) {
+
+    fn handle_keyboard(&mut self) {
         let mut buffer = [0; 1];
         std::io::stdin().read_exact(&mut buffer).unwrap();
         if buffer[0] != 0 {
@@ -61,5 +62,4 @@ impl VM {
     pub fn update_register_value(&mut self, register_number: u16, value: u16) {
         self.regs[register_number as usize] = value;
     }
-    
 }

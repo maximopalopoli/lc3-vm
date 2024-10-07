@@ -18,7 +18,10 @@ pub fn and(instr: u16, vm: &mut VM) {
         vm.update_register_value(dest_reg, vm.get_register_value(sr1) & imm5);
     } else {
         let r2 = instr & 0x7;
-        vm.update_register_value(dest_reg, vm.get_register_value(sr1) & vm.get_register_value(r2));
+        vm.update_register_value(
+            dest_reg,
+            vm.get_register_value(sr1) & vm.get_register_value(r2),
+        );
     }
 
     vm.update_flags(dest_reg);
