@@ -1,5 +1,4 @@
 use super::utils;
-use crate::mem_read;
 use crate::mem_write;
 use crate::memory;
 use crate::registers;

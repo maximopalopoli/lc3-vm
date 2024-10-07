@@ -19,8 +19,6 @@ pub fn ldi(instr: u16, regs: &mut [u16; 11], memory: &mut [u16; memory::MEMORY_M
 
 #[cfg(test)]
 mod tests {
-    use super::super::super::registers;
-    use super::ldi;
 
     /*
         Posible tests:

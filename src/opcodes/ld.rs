@@ -21,8 +21,6 @@ pub fn ld(instr: u16, regs: &mut [u16; 11], memory: &mut [u16; memory::MEMORY_MA
 
 #[cfg(test)]
 mod tests {
-    use super::super::super::registers;
-    use super::ld;
 
     /*
         Posible tests:

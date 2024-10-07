@@ -11,7 +11,6 @@ pub fn str(instr: u16, regs: &mut [u16; 11], memory: &mut [u16; memory::MEMORY_M
     // PCoffset (9 bits)
     let pc_offset = utils::sign_extend(instr & 0x3F, 6);
 
-
     let address: u32 = regs[base_reg as usize] as u32 + pc_offset as u32;
     let address: u16 = address as u16;
 

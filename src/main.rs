@@ -10,13 +10,12 @@ use std::{env, fs::File, io::BufReader};
 
 use byteorder::{BigEndian, ReadBytesExt};
 
-
 fn mem_write(address: u16, memory: &mut [u16; memory::MEMORY_MAX], value: u16) {
     memory[address as usize] = value;
 }
 
 fn mem_read(address: u16, memory: &mut [u16; memory::MEMORY_MAX]) -> u16 {
-    if address == memory::MR_KBSR as u16 {
+    if address == memory::MR_KBSR {
         handle_keyboard(memory);
     }
     memory[address as usize]
@@ -26,10 +25,10 @@ fn handle_keyboard(memory: &mut [u16; memory::MEMORY_MAX]) {
     let mut buffer = [0; 1];
     std::io::stdin().read_exact(&mut buffer).unwrap();
     if buffer[0] != 0 {
-        mem_write(memory::MR_KBSR,memory, 1 << 15);
-        mem_write(memory::MR_KBDR,memory, buffer[0] as u16);
+        mem_write(memory::MR_KBSR, memory, 1 << 15);
+        mem_write(memory::MR_KBDR, memory, buffer[0] as u16);
     } else {
-        mem_write(memory::MR_KBSR,memory, 0)
+        mem_write(memory::MR_KBSR, memory, 0)
     }
 }
 
@@ -129,25 +128,24 @@ fn main() {
     regs[registers::RCOND as usize] = condition_flags::FL_ZRO;
     regs[registers::RPC as usize] = registers::PC_START;
 
-    println!("Regs: {}, and mem: {}", regs[registers::RPC as usize], memory::MEMORY_MAX);
+    println!(
+        "Regs: {}, and mem: {}",
+        regs[registers::RPC as usize],
+        memory::MEMORY_MAX
+    );
     while (regs[registers::RPC as usize] as usize) < memory::MEMORY_MAX {
-
         // Read instruction
         let instruction = mem_read(regs[registers::RPC as usize], &mut memory);
-/*         println!("Registers: {:?}", regs);
-        println!("Memory: {:?}", &memory[regs[registers::RPC as usize] as usize]);
- */
+        /*         println!("Registers: {:?}", regs);
+               println!("Memory: {:?}", &memory[regs[registers::RPC as usize] as usize]);
+        */
 
         // Increment program counter
         regs[registers::RPC as usize] += 1;
 
-
         // Extract op_code and execute operation
         execute_instruction(instruction, &mut regs, &mut memory);
 
-//        println!("{:?}", memory);
+        //        println!("{:?}", memory);
     }
-
-
-    // Shutdown
 }

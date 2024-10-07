@@ -8,7 +8,6 @@ pub fn sign_extend(mut x: u16, bit_count: i32) -> u16 {
     x
 }
 
-
 pub fn update_flags(r: u16, regs: &mut [u16; 11]) {
     if regs[r as usize] == 0 {
         regs[registers::RCOND as usize] = condition_flags::FL_ZRO;

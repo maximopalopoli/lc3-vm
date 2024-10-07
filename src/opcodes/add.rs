@@ -21,7 +21,7 @@ pub fn add(instr: u16, regs: &mut [u16; 11]) {
         regs[dest_reg as usize] = val as u16;
     } else {
         let r2 = instr & 0x7;
-        
+
         let val: u32 = regs[sr1 as usize] as u32 + regs[r2 as usize] as u32;
 
         regs[dest_reg as usize] = val as u16;
