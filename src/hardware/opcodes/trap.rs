@@ -3,9 +3,7 @@ use std::{
     process,
 };
 
-use crate::{mem_read, memory, registers};
-
-use super::utils;
+use crate::hardware::{registers, vm::VM};
 
 pub const TRAP_GETC: u16 = 0x20; /* get character from keyboard, not echoed onto the terminal */
 pub const TRAP_OUT: u16 = 0x21; /* output a character */
@@ -14,9 +12,10 @@ pub const TRAP_IN: u16 = 0x23; /* get character from keyboard, echoed onto the t
 pub const TRAP_PUTSP: u16 = 0x24; /* output a byte string */
 pub const TRAP_HALT: u16 = 0x25; /* halt the program */
 
-pub fn trap(instr: u16, regs: &mut [u16; 11], memory: &mut [u16; memory::MEMORY_MAX]) {
+pub fn trap(instr: u16, vm: &mut VM) {
     // Set the Reg7 to the PC value
-    regs[registers::RR7 as usize] = regs[registers::RPC as usize];
+    let value = vm.get_register_value(registers::RPC);
+    vm.update_register_value(registers::RR7, value);
 
     match instr & 0xFF {
         TRAP_GETC => {
@@ -27,27 +26,27 @@ pub fn trap(instr: u16, regs: &mut [u16; 11], memory: &mut [u16; memory::MEMORY_
             io::stdin().read_exact(&mut buf).unwrap();
             // Should handle unwrap
 
-            regs[registers::RR0 as usize] = buf[0] as u16;
-            //utils::update_flags(registers::RR0, regs);
+            vm.update_register_value(registers::RR0, buf[0] as u16);
+            //vm.update_flags(registers::RR0);
         }
         TRAP_OUT => {
             //Write a character in R0 to the console display.
 
-            let c = regs[registers::RR0 as usize] as u8;
+            let c = vm.get_register_value(registers::RR0) as u8;
             print!("{}", c as char);
             io::stdout().flush().expect("failed to flush");
         }
         TRAP_PUTS => {
             // Write a string of ASCII characters to the console display.
 
-            let mut index = regs[registers::RR0 as usize];
-            let mut c = mem_read(index, memory);
+            let mut index = vm.get_register_value(registers::RR0);
+            let mut c = vm.mem_read(index);
 
             // 0x0000 is a the NULL character equivalent
             while c != 0x0000 {
                 print!("{}", (c as u8) as char);
                 index += 1;
-                c = mem_read(index, memory);
+                c = vm.mem_read(index);
             }
             io::stdout().flush().expect("failed to flush");
         }
@@ -65,14 +64,14 @@ pub fn trap(instr: u16, regs: &mut [u16; 11], memory: &mut [u16; memory::MEMORY_
             print!("{}", c as char);
             io::stdout().flush().expect("failed to flush");
 
-            regs[registers::RR0 as usize] = c as u16;
-            utils::update_flags(registers::RR0, regs);
+            vm.update_register_value(registers::RR0, c as u16);
+            vm.update_flags(registers::RR0);
         }
         TRAP_PUTSP => {
             // Write a string of ASCII characters to the console in parts (first half, second half)
 
-            let mut index = regs[registers::RR0 as usize];
-            let mut c = mem_read(index, memory);
+            let mut index = vm.get_register_value(registers::RR0);
+            let mut c = vm.mem_read(index);
 
             // 0x0000 is a the NULL character equivalent
             while c != 0x0000 {
@@ -83,7 +82,7 @@ pub fn trap(instr: u16, regs: &mut [u16; 11], memory: &mut [u16; memory::MEMORY_
                     print!("{}", (char_2 as u8) as char);
                 }
                 index += 1;
-                c = mem_read(index, memory);
+                c = vm.mem_read(index);
             }
             io::stdout().flush().expect("failed to flush");
         }

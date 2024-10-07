@@ -1,19 +1,22 @@
-use super::utils;
+use crate::hardware::vm::VM;
 
-pub fn not(instr: u16, regs: &mut [u16; 11]) {
+pub fn not(instr: u16, vm: &mut VM) {
     // destination register (DR)
     let dest_reg = (instr >> 9) & 0x7;
 
     // base register (BR)
     let base_reg = (instr >> 6) & 0x7;
 
-    regs[dest_reg as usize] = !regs[base_reg as usize];
+    let val = !vm.get_register_value(base_reg);
+    vm.update_register_value(dest_reg, val);
 
-    utils::update_flags(dest_reg, regs);
+    vm.update_flags(dest_reg);
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::hardware::vm::VM;
+
     use super::super::super::registers;
     use super::not;
 
@@ -21,14 +24,14 @@ mod tests {
     fn test_01() {
         // Not puts in a destination register the result of the not operation on the base register
 
-        let mut regs: [u16; 11] = [0; 11];
-        regs[registers::RR1 as usize] = u16::max_value();
-        regs[registers::RR2 as usize] = 5;
+        let mut vm = VM::new();
+        vm.update_register_value(registers::RR1, u16::max_value());
+        vm.update_register_value(registers::RR2, 5);
 
         // This means 'Put in the destination register the result of the not operation on the base register'
         let instr: u16 = 0b1001010001111111;
-        not(instr, &mut regs);
+        not(instr, &mut vm);
 
-        assert_eq!(0, regs[registers::RR2 as usize]);
+        assert_eq!(0, vm.get_register_value(registers::RR2));
     }
 }

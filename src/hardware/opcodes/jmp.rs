@@ -1,12 +1,14 @@
-use crate::registers;
+use crate::hardware::{registers::RPC, vm::VM};
 
-pub fn jmp(instr: u16, regs: &mut [u16; 11]) {
+pub fn jmp(instr: u16, vm: &mut VM) {
     let base_reg = (instr >> 6) & 0x7;
-    regs[registers::RPC as usize] = regs[base_reg as usize];
+    vm.update_register_value(RPC, vm.get_register_value(base_reg));
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::hardware::vm::VM;
+
     use super::super::super::registers;
     use super::jmp;
 
@@ -14,14 +16,14 @@ mod tests {
     fn test_01() {
         // Jump increments the pc in the passed register value
 
-        let mut regs: [u16; 11] = [0; 11];
-        regs[registers::RR1 as usize] = 16;
+        let mut vm = VM::new();
+        vm.update_register_value(registers::RR1, 16);
 
         // This means 'Increment PC in the content in the base register'
         let instr: u16 = 0b1100000001000000;
-        jmp(instr, &mut regs);
+        jmp(instr, &mut vm);
 
-        assert_eq!(16, regs[registers::RPC as usize]);
+        assert_eq!(16, vm.get_register_value(registers::RPC));
     }
     // Maybe a test that involves jsr, like go to a subroutine and come back with jmp
 }
