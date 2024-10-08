@@ -18,6 +18,7 @@ pub fn not(instr: u16, vm: &mut VM) -> Result<(), VmError> {
 
 #[cfg(test)]
 mod tests {
+    use crate::hardware::condition_flags;
     use crate::hardware::vm::VM;
 
     use super::super::super::registers;
@@ -37,5 +38,40 @@ mod tests {
         not(instr, &mut vm).unwrap();
 
         assert_eq!(0, vm.get_register_value(registers::RR2).unwrap());
+    }
+
+    #[test]
+    fn test_02() {
+        // When performing with a positive number, sets the negative flag on
+
+        let mut vm = VM::new();
+        vm.update_register_value(registers::RR1, 6).unwrap();
+
+        // This means 'Put in the destination register the result of the not operation on the base register'
+        let instr: u16 = 0b1001010001111111;
+        not(instr, &mut vm).unwrap();
+
+        assert_eq!(
+            condition_flags::FL_NEG,
+            vm.get_register_value(registers::RCOND).unwrap()
+        );
+    }
+
+    #[test]
+    fn test_03() {
+        // When performing with a 'negative' number, sets the positive flag on
+
+        let mut vm = VM::new();
+        vm.update_register_value(registers::RR1, u16::max_value() - 10)
+            .unwrap();
+
+        // This means 'Put in the destination register the result of the not operation on the base register'
+        let instr: u16 = 0b1001010001111111;
+        not(instr, &mut vm).unwrap();
+
+        assert_eq!(
+            condition_flags::FL_POS,
+            vm.get_register_value(registers::RCOND).unwrap()
+        );
     }
 }
