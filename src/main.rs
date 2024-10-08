@@ -1,5 +1,7 @@
 pub mod hardware;
+pub mod errors;
 
+use errors::VmError;
 use hardware::opcodes::opcodes_values;
 use hardware::opcodes::*;
 use hardware::vm::VM;
