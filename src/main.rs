@@ -5,6 +5,10 @@ use hardware::opcodes::*;
 use hardware::vm::VM;
 use std::{env, fs::File, io::BufReader};
 
+extern crate termios;
+
+use termios::*;
+
 use byteorder::{BigEndian, ReadBytesExt};
 
 fn execute_instruction(instr: u16, vm: &mut VM) {
@@ -60,21 +64,12 @@ fn execute_instruction(instr: u16, vm: &mut VM) {
 
 fn execute_program(vm: &mut VM) {
     while vm.get_register_value(hardware::registers::RPC) < hardware::memory::MEMORY_MAX as u16 {
-        // Read instruction
         let instruction = vm.mem_read(vm.get_register_value(hardware::registers::RPC));
-               //println!("Registers: {:?}", vm.regs);
-            //   println!("Memory: {:?}", &vm.mem_read(vm.get_register_value(registers::RPC)));
-            //   println!("Opcode: {}", instruction >> 12);
-        
 
-        // Increment program counter
         let current_pc = vm.get_register_value(hardware::registers::RPC);
         vm.update_register_value(hardware::registers::RPC, current_pc + 1);
 
-        // Extract op_code and execute operation
         execute_instruction(instruction, vm);
-
-        //        println!("{:?}", memory);
     }
 }
 
@@ -83,16 +78,23 @@ fn main() {
     if args.len() < 2 {
         println!("Usage: lc3 [image-file1] ...\n");
         return;
-        //exit(2);
     }
+
+    let stdin = 0;
+    let termios = termios::Termios::from_fd(stdin).unwrap();
+    
+    let mut new_termios = termios.clone();
+    new_termios.c_iflag &= IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON;
+    new_termios.c_lflag &= !(ICANON | ECHO);
+    
+    tcsetattr(stdin, TCSANOW, &mut new_termios).unwrap();
+    
 
     let f = File::open(args[1].clone()).expect("couldn't open file");
     let mut file = BufReader::new(f);
 
-    // Note how we're using `read_u16` _and_ BigEndian to read the binary file.
     let mut base_address = file.read_u16::<BigEndian>().expect("error");
 
-    //@{Setup}
     let mut vm = VM::new();
 
     loop {
@@ -112,13 +114,8 @@ fn main() {
         }
     }
 
-    /* 
-    println!(
-        "Regs: {}, and mem: {}",
-        vm.get_register_value(hardware::registers::RPC),
-        hardware::memory::MEMORY_MAX
-    );
- */
 
     execute_program(&mut vm);
+
+    tcsetattr(stdin, TCSANOW, &termios).unwrap();
 }
