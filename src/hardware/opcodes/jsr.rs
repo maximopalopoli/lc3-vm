@@ -29,7 +29,7 @@ mod tests {
         vm.update_register_value(registers::RR1, 16);
 
         // This means 'Increment PC in the content in the base register'
-        let jmp_instr: u16 = 0b1100000001000010;
+        let jmp_instr: u16 = 0b1100000001000000;
         jmp(jmp_instr, &mut vm);
 
         // This means 'Save PC at R7 ad then increment it in the extended PCoffset'
