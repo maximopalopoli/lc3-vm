@@ -4,6 +4,7 @@ use crate::{
     hardware::{registers, vm::VM},
 };
 
+/// Puts in source register the value stored in pc + a pc_offset
 pub fn st(instr: u16, vm: &mut VM) -> Result<(), VmError> {
     // source register (SR)
     let source_reg = (instr >> 9) & 0x7;

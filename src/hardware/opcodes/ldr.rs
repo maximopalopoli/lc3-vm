@@ -2,6 +2,7 @@ use crate::{errors::VmError, hardware::vm::VM};
 
 use super::utils;
 
+/// Loads in a destination register the value stored in the value in a base register plus an pc_offset, and then update the flags
 pub fn ldr(instr: u16, vm: &mut VM) -> Result<(), VmError> {
     // destination register (DR)
     let dest_reg = (instr >> 9) & 0x7;

@@ -4,6 +4,7 @@ use crate::{
     hardware::{registers, vm::VM},
 };
 
+// Loads in a destination register the sum between pc and an pc_offset, and then update the flags
 pub fn lea(instr: u16, vm: &mut VM) -> Result<(), VmError> {
     // destination register (DR)
     let dest_reg = (instr >> 9) & 0x7;

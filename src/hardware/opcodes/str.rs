@@ -2,6 +2,7 @@ use crate::{errors::VmError, hardware::vm::VM};
 
 use super::utils;
 
+/// Puts in source register the value stored in base register + a pc_offset
 pub fn str(instr: u16, vm: &mut VM) -> Result<(), VmError> {
     // destination register (DR)
     let dest_reg = (instr >> 9) & 0x7;

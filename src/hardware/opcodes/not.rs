@@ -1,5 +1,6 @@
 use crate::{errors::VmError, hardware::vm::VM};
 
+/// Performs an not on the value of a base register and puts the result in a destination register, and then update the flags
 pub fn not(instr: u16, vm: &mut VM) -> Result<(), VmError> {
     // destination register (DR)
     let dest_reg = (instr >> 9) & 0x7;

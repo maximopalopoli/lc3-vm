@@ -3,6 +3,7 @@ use crate::{
     hardware::{registers::RPC, vm::VM},
 };
 
+/// Sets the pc as the value in the base register
 pub fn jmp(instr: u16, vm: &mut VM) -> Result<(), VmError> {
     let base_reg = (instr >> 6) & 0x7;
     vm.update_register_value(RPC, vm.get_register_value(base_reg)?)?;

@@ -5,6 +5,7 @@ use crate::{
 
 use super::utils;
 
+/// Saves the RPC value on the R7, and then, depending on a flag, increments the pc in an offset, or sets the pc as the value of a base_reg
 pub fn jsr(instr: u16, vm: &mut VM) -> Result<(), VmError> {
     // if 1, then use pc_offset, if 0
     let use_offset = (instr >> 11) & 1;
@@ -53,7 +54,6 @@ mod tests {
     #[test]
     fn test_02() {
         // Jsr saves the pc value and then increments the pc in the value inside the passed register
-
         let mut vm = VM::new();
         vm.update_register_value(registers::RR1, 8).unwrap();
         vm.update_register_value(registers::RR2, 40).unwrap();

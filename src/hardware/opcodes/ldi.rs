@@ -3,6 +3,7 @@ use crate::errors::VmError;
 use crate::hardware::registers;
 use crate::hardware::vm::VM;
 
+/// Loads in a destination register the value stored in the direction obtained by the sum of pc and pc_offset, and then update the flags
 pub fn ldi(instr: u16, vm: &mut VM) -> Result<(), VmError> {
     // destination register (DR)
     let r0 = (instr >> 9) & 0x7;

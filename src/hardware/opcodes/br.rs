@@ -4,6 +4,7 @@ use crate::{
     hardware::{registers, vm::VM},
 };
 
+/// Depending on the cond_flag, if it matches the current conditional register, then jumps to the position defined in the pc_offset
 pub fn br(instr: u16, vm: &mut VM) -> Result<(), VmError> {
     // PCoffset (9 bits)
     let pc_offset = utils::sign_extend(instr & 0x1FF, 9);

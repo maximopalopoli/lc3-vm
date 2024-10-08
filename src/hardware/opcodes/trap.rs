@@ -15,6 +15,7 @@ pub const TRAP_IN: u16 = 0x23;
 pub const TRAP_PUTSP: u16 = 0x24;
 pub const TRAP_HALT: u16 = 0x25;
 
+/// Performs the corresponding trap operation
 pub fn trap(instr: u16, vm: &mut VM) -> Result<(), VmError> {
     // Set the Reg7 to the PC value
     let pc_value = vm.get_register_value(registers::RPC)?;

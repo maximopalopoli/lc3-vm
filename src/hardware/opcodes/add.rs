@@ -2,6 +2,7 @@ use crate::{errors::VmError, VM};
 
 use super::utils;
 
+/// Depending on a flag, adds two numbers or a number and an imm5 and puts the results of the operation in a destination register, and then update the flags
 pub fn add(instr: u16, vm: &mut VM) -> Result<(), VmError> {
     // destination register (DR)
     let dest_reg = (instr >> 9) & 0x7;
