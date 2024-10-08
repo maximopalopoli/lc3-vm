@@ -20,9 +20,44 @@ pub fn ldi(instr: u16, vm: &mut VM) {
 
 #[cfg(test)]
 mod tests {
+    use crate::{hardware::{condition_flags, registers, vm::VM}, ldi::ldi, st::st};
 
-    /*
-        Posible tests:
-        - Do a ST an the verify the storaged value is there with an LDI
-    */
+    #[test]
+    fn test_01() {
+        // ldi puts in the source register the content in the memory address defined on the memory direction defined by the offset
+
+        let mut vm = VM::new();
+
+        vm.update_register_value(registers::RR1, 31);
+
+        // This means 'Put at offset direction of memory the content of the source register'
+        let st1_instr: u16 = 0b0011001000000001; // 1
+        st(st1_instr, &mut vm);
+
+        vm.update_register_value(registers::RR2, 96);
+
+        // This means 'Put at offset direction of memory the content of the source register'
+        let st2_instr: u16 = 0b0011010000011111; // 31
+        st(st2_instr, &mut vm);
+
+        // This means 'Put at source register the content defined on the direction of memory product of pc+offset'
+        let ldi_instr: u16 = 0b1010011000000001;
+        ldi(ldi_instr, &mut vm);
+
+        assert_eq!(96, vm.get_register_value(registers::RR3));
+        assert!(vm.get_register_value(registers::RCOND) == condition_flags::FL_POS);
+    }
+
+    #[test]
+    fn test_02() {
+        // When putting a zero value, ldi sets zero flag on (values of memory are initialized in zero)
+        
+        let mut vm = VM::new();
+
+        // This means 'Put at source register the content defined on the direction of memory product of pc+offset'
+        let ldi_instr: u16 = 0b1010011000000001;
+        ldi(ldi_instr, &mut vm);
+
+        assert!(vm.get_register_value(registers::RCOND) == condition_flags::FL_ZRO);
+    }
 }
