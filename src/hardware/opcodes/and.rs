@@ -29,6 +29,7 @@ pub fn and(instr: u16, vm: &mut VM) {
 
 #[cfg(test)]
 mod tests {
+    use crate::hardware::condition_flags;
     use crate::hardware::vm::VM;
 
     use super::super::super::registers;
@@ -65,5 +66,33 @@ mod tests {
         assert_eq!(7, vm.get_register_value(registers::RR3));
     }
 
-    // Other tests: try an overflow, see flag updates
+    #[test]
+    fn test_03() {
+        // Perform an and with a positive result lets turned on the positive flag
+
+        let mut vm = VM::new();
+        vm.update_register_value(registers::RR1, 3);
+
+        // This means 'Do an and with RR1 and an imm5 and put the result on RR3'
+        let instr: u16 = 0b0001011001100111;
+
+        and(instr, &mut vm);
+
+        assert_eq!(condition_flags::FL_POS, vm.get_register_value(registers::RCOND));
+    }
+
+    #[test]
+    fn test_04() {
+        // Perform an and with a zero result lets turned on the positive flag
+
+        let mut vm = VM::new();
+        vm.update_register_value(registers::RR1, 0);
+
+        // This means 'Do an and with RR1 and an imm5 and put the result on RR3'
+        let instr: u16 = 0b0001011001111111;
+
+        and(instr, &mut vm);
+
+        assert_eq!(condition_flags::FL_ZRO, vm.get_register_value(registers::RCOND));
+    }
 }
