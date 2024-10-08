@@ -81,7 +81,10 @@ mod tests {
 
         add(instr, &mut vm);
 
-        assert_eq!(condition_flags::FL_POS, vm.get_register_value(registers::RCOND));
+        assert_eq!(
+            condition_flags::FL_POS,
+            vm.get_register_value(registers::RCOND)
+        );
     }
 
     #[test]
@@ -96,7 +99,10 @@ mod tests {
 
         add(instr, &mut vm);
 
-        assert_eq!(condition_flags::FL_ZRO, vm.get_register_value(registers::RCOND));
+        assert_eq!(
+            condition_flags::FL_ZRO,
+            vm.get_register_value(registers::RCOND)
+        );
     }
 
     #[test]
@@ -111,6 +117,9 @@ mod tests {
 
         add(instr, &mut vm);
 
-        assert_eq!(condition_flags::FL_NEG, vm.get_register_value(registers::RCOND));
+        assert_eq!(
+            condition_flags::FL_NEG,
+            vm.get_register_value(registers::RCOND)
+        );
     }
 }

@@ -122,6 +122,4 @@ mod tests {
 
         assert_eq!(225, vm.get_register_value(registers::RPC));
     }
-
-    
 }

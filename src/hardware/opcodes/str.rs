@@ -15,7 +15,7 @@ pub fn str(instr: u16, vm: &mut VM) {
     // Add the content of the base register to the offset to get the address where store the data
     let address: u32 = vm.get_register_value(base_reg) as u32 + pc_offset as u32;
     let address: u16 = address as u16;
-    
+
     let value = vm.get_register_value(dest_reg);
 
     vm.mem_write(address, value);

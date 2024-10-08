@@ -57,8 +57,7 @@ fn execute_instruction(instr: u16, vm: &mut VM) {
         opcodes_values::OP_TRAP => {
             trap::trap(instr, vm);
         }
-        _ => {}
-        // RTI and RES should not be used
+        _ => {} // RTI and RES should not be used
     }
 }
 
@@ -82,13 +81,12 @@ fn main() {
 
     let stdin = 0;
     let termios = termios::Termios::from_fd(stdin).unwrap();
-    
-    let mut new_termios = termios.clone();
+
+    let mut new_termios = termios;
     new_termios.c_iflag &= IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON;
     new_termios.c_lflag &= !(ICANON | ECHO);
-    
-    tcsetattr(stdin, TCSANOW, &mut new_termios).unwrap();
-    
+
+    tcsetattr(stdin, TCSANOW, &new_termios).unwrap();
 
     let f = File::open(args[1].clone()).expect("couldn't open file");
     let mut file = BufReader::new(f);
@@ -113,7 +111,6 @@ fn main() {
             }
         }
     }
-
 
     execute_program(&mut vm);
 

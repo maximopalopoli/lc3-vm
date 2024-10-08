@@ -19,7 +19,11 @@ pub fn ldi(instr: u16, vm: &mut VM) {
 
 #[cfg(test)]
 mod tests {
-    use crate::{hardware::{condition_flags, registers, vm::VM}, ldi::ldi, st::st};
+    use crate::{
+        hardware::{condition_flags, registers, vm::VM},
+        ldi::ldi,
+        st::st,
+    };
 
     #[test]
     fn test_01() {
@@ -50,7 +54,7 @@ mod tests {
     #[test]
     fn test_02() {
         // When putting a zero value, ldi sets zero flag on (values of memory are initialized in zero)
-        
+
         let mut vm = VM::new();
 
         // This means 'Put at source register the content defined on the direction of memory product of pc+offset'

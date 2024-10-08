@@ -44,7 +44,7 @@ mod tests {
 
         // This means 'Set PC in the content in the RR7'
         let instr: u16 = 0b1100000111000000;
-        jmp(instr, &mut vm);        
+        jmp(instr, &mut vm);
 
         assert_eq!(16, vm.get_register_value(registers::RPC));
     }

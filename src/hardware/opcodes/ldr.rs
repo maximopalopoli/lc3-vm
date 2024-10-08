@@ -23,7 +23,11 @@ pub fn ldr(instr: u16, vm: &mut VM) {
 
 #[cfg(test)]
 mod tests {
-    use crate::{hardware::{condition_flags, registers, vm::VM}, ldr::ldr, st::st};
+    use crate::{
+        hardware::{condition_flags, registers, vm::VM},
+        ldr::ldr,
+        st::st,
+    };
 
     #[test]
     fn test_01() {
@@ -49,7 +53,7 @@ mod tests {
     #[test]
     fn test_02() {
         // When putting a zero value, ldr sets zero flag on (values of memory and registers are initialized in zero)
-        
+
         let mut vm = VM::new();
 
         // This means 'Put at source register the content of offset direction of memory + base register value'

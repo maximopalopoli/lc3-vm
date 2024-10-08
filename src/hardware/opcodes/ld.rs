@@ -9,7 +9,6 @@ pub fn ld(instr: u16, vm: &mut VM) {
     // PCoffset (9 bits)
     let pc_offset = utils::sign_extend(instr & 0x1FF, 9);
 
-
     // Read the value from the place where the memory above was computed
     let address: u32 = pc_offset as u32 + vm.get_register_value(registers::RPC) as u32;
     let value = vm.mem_read(address as u16);
@@ -20,7 +19,11 @@ pub fn ld(instr: u16, vm: &mut VM) {
 
 #[cfg(test)]
 mod tests {
-    use crate::{hardware::{condition_flags, registers, vm::VM}, ld::ld, st::st};
+    use crate::{
+        hardware::{condition_flags, registers, vm::VM},
+        ld::ld,
+        st::st,
+    };
 
     #[test]
     fn test_01() {
@@ -44,7 +47,7 @@ mod tests {
     #[test]
     fn test_02() {
         // When putting a negative value, ld sets negative flag on
-        
+
         let mut vm = VM::new();
         vm.update_register_value(registers::RR1, u16::max_value());
 

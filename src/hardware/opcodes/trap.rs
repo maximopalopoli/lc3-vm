@@ -99,9 +99,9 @@ pub fn trap(instr: u16, vm: &mut VM) {
 #[cfg(test)]
 mod tests {
     /*
-        - Check the RR7 is set with the PC value
-        - Check that in the getc trap the value is set in RR0
-        - Could check that really reads/writes if I redirect the I/O
-        - Could run a thread and expect to close if I perform a HALT
-     */
+       - Check the RR7 is set with the PC value
+       - Check that in the getc trap the value is set in RR0
+       - Could check that really reads/writes if I redirect the I/O
+       - Could run a thread and expect to close if I perform a HALT
+    */
 }
