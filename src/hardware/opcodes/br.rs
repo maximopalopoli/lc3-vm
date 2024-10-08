@@ -67,6 +67,27 @@ mod tests {
 
     #[test]
     fn test_03() {
+        // Make an operation that lefts the negative flag on, and then make a conditional branch
+
+        let mut vm = VM::new();
+        vm.update_register_value(registers::RR1, 1);
+        vm.update_register_value(registers::RR2, 4);
+
+        // This means 'Add RR1 and an imm5 and put the result on RR3'
+        let add_instr: u16 = 0b0001011001111110;
+        add(add_instr, &mut vm);
+
+        assert!(vm.get_register_value(registers::RCOND) == condition_flags::FL_NEG);
+
+        // This means 'If last operation left flag negative, then increment PC in an PCoffset'
+        let br_instr = 0b0000100001000011;
+        br(br_instr, &mut vm);
+
+        assert_eq!(67, vm.get_register_value(registers::RPC));
+    }
+
+    #[test]
+    fn test_04() {
         // Make an operation that lefts the negative or zero flag on, and then make a conditional branch
 
         let mut vm = VM::new();
@@ -87,7 +108,7 @@ mod tests {
     }
 
     #[test]
-    fn test_04() {
+    fn test_05() {
         // Make a conditional branch and verify the RPC has moved
 
         let mut vm = VM::new();
@@ -101,6 +122,4 @@ mod tests {
 
         assert_eq!(225, vm.get_register_value(registers::RPC));
     }
-
-    // Can't try the negative flag because could not perform a negative operation (unsigned 16)
 }

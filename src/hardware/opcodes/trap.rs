@@ -5,17 +5,17 @@ use std::{
 
 use crate::hardware::{registers, vm::VM};
 
-pub const TRAP_GETC: u16 = 0x20; /* get character from keyboard, not echoed onto the terminal */
-pub const TRAP_OUT: u16 = 0x21; /* output a character */
-pub const TRAP_PUTS: u16 = 0x22; /* output a word string */
-pub const TRAP_IN: u16 = 0x23; /* get character from keyboard, echoed onto the terminal */
-pub const TRAP_PUTSP: u16 = 0x24; /* output a byte string */
-pub const TRAP_HALT: u16 = 0x25; /* halt the program */
+pub const TRAP_GETC: u16 = 0x20;
+pub const TRAP_OUT: u16 = 0x21;
+pub const TRAP_PUTS: u16 = 0x22;
+pub const TRAP_IN: u16 = 0x23;
+pub const TRAP_PUTSP: u16 = 0x24;
+pub const TRAP_HALT: u16 = 0x25;
 
 pub fn trap(instr: u16, vm: &mut VM) {
     // Set the Reg7 to the PC value
-    let value = vm.get_register_value(registers::RPC);
-    vm.update_register_value(registers::RR7, value);
+    let pc_value = vm.get_register_value(registers::RPC);
+    vm.update_register_value(registers::RR7, pc_value);
 
     match instr & 0xFF {
         TRAP_GETC => {
@@ -24,10 +24,8 @@ pub fn trap(instr: u16, vm: &mut VM) {
 
             let mut buf = [0; 1];
             io::stdin().read_exact(&mut buf).unwrap();
-            // Should handle unwrap
 
             vm.update_register_value(registers::RR0, buf[0] as u16);
-            //vm.update_flags(registers::RR0);
         }
         TRAP_OUT => {
             //Write a character in R0 to the console display.
@@ -58,7 +56,6 @@ pub fn trap(instr: u16, vm: &mut VM) {
 
             let mut buf: [u8; 1] = [0; 1];
             io::stdin().read_exact(&mut buf).unwrap();
-            // Should handle unwrap
 
             let c = buf[0];
             print!("{}", c as char);
@@ -87,7 +84,7 @@ pub fn trap(instr: u16, vm: &mut VM) {
             io::stdout().flush().expect("failed to flush");
         }
         TRAP_HALT => {
-            // Halts
+            // Stop the program
             println!("HALT detected");
             io::stdout().flush().expect("failed to flush");
             process::exit(1);
@@ -101,5 +98,27 @@ pub fn trap(instr: u16, vm: &mut VM) {
 
 #[cfg(test)]
 mod tests {
-    // ???
+    use crate::{
+        hardware::{registers, vm::VM},
+        jmp::jmp,
+        trap::{trap, TRAP_OUT},
+    };
+
+    #[test]
+    fn test_01() {
+        //Check that the value of the PC is saved in R7
+        let mut vm = VM::new();
+
+        vm.update_register_value(registers::RR1, 16);
+
+        // This means 'Increment PC in the content in the base register'
+        let jmp_instr: u16 = 0b1100000001000000;
+        jmp(jmp_instr, &mut vm);
+
+        trap(TRAP_OUT, &mut vm);
+
+        assert_eq!(16, vm.get_register_value(registers::RR7));
+    }
+
+    // I imagine other tests, but for that cases i would have to mock i/o operations
 }

@@ -5,6 +5,10 @@ use hardware::opcodes::*;
 use hardware::vm::VM;
 use std::{env, fs::File, io::BufReader};
 
+extern crate termios;
+
+use termios::*;
+
 use byteorder::{BigEndian, ReadBytesExt};
 
 fn execute_instruction(instr: u16, vm: &mut VM) {
@@ -53,13 +57,18 @@ fn execute_instruction(instr: u16, vm: &mut VM) {
         opcodes_values::OP_TRAP => {
             trap::trap(instr, vm);
         }
-        opcodes_values::OP_RTI => {
-            // Rti impl - Should not be used
-        }
-        opcodes_values::OP_RES => {
-            // Res impl - Should not be used
-        }
-        _ => {}
+        _ => {} // RTI and RES should not be used
+    }
+}
+
+fn execute_program(vm: &mut VM) {
+    while vm.get_register_value(hardware::registers::RPC) < hardware::memory::MEMORY_MAX as u16 {
+        let instruction = vm.mem_read(vm.get_register_value(hardware::registers::RPC));
+
+        let current_pc = vm.get_register_value(hardware::registers::RPC);
+        vm.update_register_value(hardware::registers::RPC, current_pc + 1);
+
+        execute_instruction(instruction, vm);
     }
 }
 
@@ -68,16 +77,22 @@ fn main() {
     if args.len() < 2 {
         println!("Usage: lc3 [image-file1] ...\n");
         return;
-        //exit(2);
     }
+
+    let stdin = 0;
+    let termios = termios::Termios::from_fd(stdin).unwrap();
+
+    let mut new_termios = termios;
+    new_termios.c_iflag &= IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON;
+    new_termios.c_lflag &= !(ICANON | ECHO);
+
+    tcsetattr(stdin, TCSANOW, &new_termios).unwrap();
 
     let f = File::open(args[1].clone()).expect("couldn't open file");
     let mut file = BufReader::new(f);
 
-    // Note how we're using `read_u16` _and_ BigEndian to read the binary file.
     let mut base_address = file.read_u16::<BigEndian>().expect("error");
 
-    //@{Setup}
     let mut vm = VM::new();
 
     loop {
@@ -97,30 +112,7 @@ fn main() {
         }
     }
 
-    // Set as Zero bc can be initialized with garbage
-    vm.update_flags(hardware::condition_flags::FL_ZRO);
-    vm.update_register_value(hardware::registers::RPC, hardware::registers::PC_START);
+    execute_program(&mut vm);
 
-    println!(
-        "Regs: {}, and mem: {}",
-        vm.get_register_value(hardware::registers::RPC),
-        hardware::memory::MEMORY_MAX
-    );
-    while (vm.get_register_value(hardware::registers::RPC) as usize) < hardware::memory::MEMORY_MAX
-    {
-        // Read instruction
-        let instruction = vm.mem_read(vm.get_register_value(hardware::registers::RPC));
-        /*         println!("Registers: {:?}", regs);
-               println!("Memory: {:?}", &memory[regs[hardware::registers::RPC as usize] as usize]);
-        */
-
-        // Increment program counter
-        let current_pc = vm.get_register_value(hardware::registers::RPC);
-        vm.update_register_value(hardware::registers::RPC, current_pc + 1);
-
-        // Extract op_code and execute operation
-        execute_instruction(instruction, &mut vm);
-
-        //        println!("{:?}", memory);
-    }
+    tcsetattr(stdin, TCSANOW, &termios).unwrap();
 }

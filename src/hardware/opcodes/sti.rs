@@ -8,12 +8,13 @@ pub fn sti(instr: u16, vm: &mut VM) {
     // PCoffset (9 bits)
     let pc_offset = utils::sign_extend(instr & 0x1FF, 9);
 
-    let val: u32 = vm.get_register_value(registers::RPC) as u32 + pc_offset as u32;
-    let val: u16 = val as u16;
+    // Add the pc to the offset to get the address where read
+    let var_address: u32 = vm.get_register_value(registers::RPC) as u32 + pc_offset as u32;
+    let var_address: u16 = var_address as u16;
 
-    // This is the difference between STI and ST
-    let address = vm.mem_read(val) as usize;
+    let address = vm.mem_read(var_address) as usize;
 
+    // store the reg value to the adress read above
     let value = vm.get_register_value(source_reg);
     vm.mem_write(address as u16, value);
 }

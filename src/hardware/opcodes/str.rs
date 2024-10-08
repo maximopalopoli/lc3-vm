@@ -12,11 +12,12 @@ pub fn str(instr: u16, vm: &mut VM) {
     // PCoffset (9 bits)
     let pc_offset = utils::sign_extend(instr & 0x3F, 6);
 
+    // Add the content of the base register to the offset to get the address where store the data
     let address: u32 = vm.get_register_value(base_reg) as u32 + pc_offset as u32;
     let address: u16 = address as u16;
 
     let value = vm.get_register_value(dest_reg);
-    // add pc_offset to the content of a base register, look at that memory location and put there the data in the destination register
+
     vm.mem_write(address, value);
 }
 

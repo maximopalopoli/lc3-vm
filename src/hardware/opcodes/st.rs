@@ -8,8 +8,7 @@ pub fn st(instr: u16, vm: &mut VM) {
     // PCoffset (9 bits)
     let pc_offset = utils::sign_extend(instr & 0x1FF, 9);
 
-    // Add the current PC to the PC offset
-    // We're doing these conversions to avoid overflow
+    // Add the current PC to the PC offset to get the address where store the data
     let address: u32 = vm.get_register_value(registers::RPC) as u32 + pc_offset as u32;
     let address: u16 = address as u16;
 
@@ -41,5 +40,5 @@ mod tests {
         ld(ld_instr, &mut vm);
 
         assert_eq!(16, vm.get_register_value(registers::RR3));
-    } // This test is similar to the thing I would test with de load type instructions
+    }
 }

@@ -13,13 +13,11 @@ pub fn add(instr: u16, vm: &mut VM) {
     let imm_flag = (instr >> 5) & 0x1;
 
     if imm_flag == 1 {
-        // The five bits that we need to extend
+        // The five bits to extend
         let imm5 = utils::sign_extend(instr & 0x1F, 5);
 
-        // This is declared as u32 to prevent from overflow.
+        // I use casting to prevent an overflow.
         let val: u32 = imm5 as u32 + vm.get_register_value(sr1) as u32;
-
-        // Set the result of the sum to the target register
         vm.update_register_value(dest_reg, val as u16);
     } else {
         let r2 = instr & 0x7;
@@ -34,6 +32,7 @@ pub fn add(instr: u16, vm: &mut VM) {
 
 #[cfg(test)]
 mod tests {
+    use crate::hardware::condition_flags;
     use crate::hardware::vm::VM;
 
     use super::super::super::registers;
@@ -70,5 +69,57 @@ mod tests {
         assert_eq!(10, vm.get_register_value(registers::RR3));
     }
 
-    // Other tests: try an overflow, see flag updates
+    #[test]
+    fn test_03() {
+        // Adding with a positive result lets turned on the positive flag
+
+        let mut vm = VM::new();
+        vm.update_register_value(registers::RR1, 3);
+
+        // This means 'Add RR1 and an imm5 and put the result on RR3'
+        let instr: u16 = 0b0001011001100111;
+
+        add(instr, &mut vm);
+
+        assert_eq!(
+            condition_flags::FL_POS,
+            vm.get_register_value(registers::RCOND)
+        );
+    }
+
+    #[test]
+    fn test_04() {
+        // Adding with a zero result lets turned on the zero flag
+
+        let mut vm = VM::new();
+        vm.update_register_value(registers::RR1, 0);
+
+        // This means 'Add RR1 and an imm5 and put the result on RR3'
+        let instr: u16 = 0b0001011001100000;
+
+        add(instr, &mut vm);
+
+        assert_eq!(
+            condition_flags::FL_ZRO,
+            vm.get_register_value(registers::RCOND)
+        );
+    }
+
+    #[test]
+    fn test_05() {
+        // Adding with a negative result lets turned on the negative flag
+
+        let mut vm = VM::new();
+        vm.update_register_value(registers::RR1, 0);
+
+        // This means 'Add RR1 and an imm5 and put the result on RR3'
+        let instr: u16 = 0b0001011001110000;
+
+        add(instr, &mut vm);
+
+        assert_eq!(
+            condition_flags::FL_NEG,
+            vm.get_register_value(registers::RCOND)
+        );
+    }
 }
