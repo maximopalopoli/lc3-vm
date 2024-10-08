@@ -88,10 +88,18 @@ fn main() {
 
     tcsetattr(stdin, TCSANOW, &new_termios).unwrap();
 
-    let f = File::open(args[1].clone()).expect("couldn't open file");
+    let f = match File::open(args[1].clone()) {
+        Ok(file) => file,
+        Err(e) => {
+            println!("Error opening the file '{}': {}", args[1], e);
+            return;
+        }
+    };
     let mut file = BufReader::new(f);
 
-    let mut base_address = file.read_u16::<BigEndian>().expect("error");
+    let mut base_address = file
+        .read_u16::<BigEndian>()
+        .expect("Error reading the base address from the file");
 
     let mut vm = VM::new();
 
@@ -106,6 +114,7 @@ fn main() {
                     println!("OK")
                 } else {
                     println!("failed: {}", e);
+                    return; // Could be a corrupted file
                 }
                 break;
             }
