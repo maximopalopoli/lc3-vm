@@ -3,9 +3,14 @@ use crate::hardware::{registers, vm::VM};
 use super::utils;
 
 pub fn jsr(instr: u16, vm: &mut VM) {
+    // if 1, then use pc_offset, if 0
     let use_offset = (instr >> 11) & 1;
+
+    // save the pc in R7
     vm.update_register_value(registers::RR7, vm.get_register_value(registers::RPC));
+
     if use_offset != 0 {
+        // Use casting to avoid overflow
         let pc_offset = utils::sign_extend(instr & 0x7ff, 11);
         let val: u32 = vm.get_register_value(registers::RPC) as u32 + pc_offset as u32;
         vm.update_register_value(registers::RPC, val as u16);

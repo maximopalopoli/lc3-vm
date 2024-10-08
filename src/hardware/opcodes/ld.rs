@@ -9,9 +9,9 @@ pub fn ld(instr: u16, vm: &mut VM) {
     // PCoffset (9 bits)
     let pc_offset = utils::sign_extend(instr & 0x1FF, 9);
 
-    let address: u32 = pc_offset as u32 + vm.get_register_value(registers::RPC) as u32;
 
     // Read the value from the place where the memory above was computed
+    let address: u32 = pc_offset as u32 + vm.get_register_value(registers::RPC) as u32;
     let value = vm.mem_read(address as u16);
 
     vm.update_register_value(dest_reg, value);

@@ -13,13 +13,11 @@ pub fn add(instr: u16, vm: &mut VM) {
     let imm_flag = (instr >> 5) & 0x1;
 
     if imm_flag == 1 {
-        // The five bits that we need to extend
+        // The five bits to extend
         let imm5 = utils::sign_extend(instr & 0x1F, 5);
 
-        // This is declared as u32 to prevent from overflow.
+        // I use casting to prevent an overflow.
         let val: u32 = imm5 as u32 + vm.get_register_value(sr1) as u32;
-
-        // Set the result of the sum to the target register
         vm.update_register_value(dest_reg, val as u16);
     } else {
         let r2 = instr & 0x7;

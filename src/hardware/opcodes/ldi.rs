@@ -9,11 +9,10 @@ pub fn ldi(instr: u16, vm: &mut VM) {
     // PCoffset (9 bits)
     let pc_offset = utils::sign_extend(instr & 0x1FF, 9);
 
+    // add pc_offset to the current PC, look at that memory location to get the final address
     let address_read = vm.mem_read(vm.get_register_value(registers::RPC) + pc_offset);
-
     let value = vm.mem_read(address_read);
 
-    // add pc_offset to the current PC, look at that memory location to get the final address
     vm.update_register_value(r0, value);
     vm.update_flags(r0);
 }

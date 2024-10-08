@@ -13,7 +13,7 @@ pub fn and(instr: u16, vm: &mut VM) {
     let imm_flag = (instr >> 5) & 0x1;
 
     if imm_flag == 1 {
-        // The five bits that we need to extend
+        // The five bits to extend
         let imm5 = utils::sign_extend(instr & 0x1F, 5);
         vm.update_register_value(dest_reg, vm.get_register_value(sr1) & imm5);
     } else {

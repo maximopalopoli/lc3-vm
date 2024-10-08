@@ -14,8 +14,8 @@ pub const TRAP_HALT: u16 = 0x25; /* halt the program */
 
 pub fn trap(instr: u16, vm: &mut VM) {
     // Set the Reg7 to the PC value
-    let value = vm.get_register_value(registers::RPC);
-    vm.update_register_value(registers::RR7, value);
+    let pc_value = vm.get_register_value(registers::RPC);
+    vm.update_register_value(registers::RR7, pc_value);
 
     match instr & 0xFF {
         TRAP_GETC => {
@@ -24,10 +24,8 @@ pub fn trap(instr: u16, vm: &mut VM) {
 
             let mut buf = [0; 1];
             io::stdin().read_exact(&mut buf).unwrap();
-            // Should handle unwrap
 
             vm.update_register_value(registers::RR0, buf[0] as u16);
-            //vm.update_flags(registers::RR0);
         }
         TRAP_OUT => {
             //Write a character in R0 to the console display.
@@ -58,7 +56,6 @@ pub fn trap(instr: u16, vm: &mut VM) {
 
             let mut buf: [u8; 1] = [0; 1];
             io::stdin().read_exact(&mut buf).unwrap();
-            // Should handle unwrap
 
             let c = buf[0];
             print!("{}", c as char);
@@ -87,7 +84,7 @@ pub fn trap(instr: u16, vm: &mut VM) {
             io::stdout().flush().expect("failed to flush");
         }
         TRAP_HALT => {
-            // Halts
+            // Stop the program
             println!("HALT detected");
             io::stdout().flush().expect("failed to flush");
             process::exit(1);
@@ -101,5 +98,10 @@ pub fn trap(instr: u16, vm: &mut VM) {
 
 #[cfg(test)]
 mod tests {
-    // ???
+    /*
+        - Check the RR7 is set with the PC value
+        - Check that in the getc trap the value is set in RR0
+        - Could check that really reads/writes if I redirect the I/O
+        - Could run a thread and expect to close if I perform a HALT
+     */
 }
