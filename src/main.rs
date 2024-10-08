@@ -6,7 +6,6 @@ use hardware::vm::VM;
 use std::{env, fs::File, io::BufReader};
 
 extern crate termios;
-
 use termios::*;
 
 use byteorder::{BigEndian, ReadBytesExt};
@@ -80,13 +79,13 @@ fn main() {
     }
 
     let stdin = 0;
-    let termios = termios::Termios::from_fd(stdin).unwrap();
+    let termios = termios::Termios::from_fd(stdin).expect("Error initializing termios from stdin");
 
     let mut new_termios = termios;
     new_termios.c_iflag &= IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON;
     new_termios.c_lflag &= !(ICANON | ECHO);
 
-    tcsetattr(stdin, TCSANOW, &new_termios).unwrap();
+    tcsetattr(stdin, TCSANOW, &new_termios).expect("Error from termios when setting parameters");
 
     let f = match File::open(args[1].clone()) {
         Ok(file) => file,
@@ -123,5 +122,5 @@ fn main() {
 
     execute_program(&mut vm);
 
-    tcsetattr(stdin, TCSANOW, &termios).unwrap();
+    tcsetattr(stdin, TCSANOW, &termios).expect("Error from termios when reseting parameters");
 }
