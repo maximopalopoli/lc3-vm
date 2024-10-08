@@ -3,7 +3,7 @@ use std::{
     process,
 };
 
-use crate::hardware::{registers, vm::VM};
+use crate::{errors::VmError, hardware::{registers, vm::VM}};
 
 pub const TRAP_GETC: u16 = 0x20;
 pub const TRAP_OUT: u16 = 0x21;
@@ -12,10 +12,10 @@ pub const TRAP_IN: u16 = 0x23;
 pub const TRAP_PUTSP: u16 = 0x24;
 pub const TRAP_HALT: u16 = 0x25;
 
-pub fn trap(instr: u16, vm: &mut VM) {
+pub fn trap(instr: u16, vm: &mut VM) -> Result<(), VmError> {
     // Set the Reg7 to the PC value
-    let pc_value = vm.get_register_value(registers::RPC);
-    vm.update_register_value(registers::RR7, pc_value);
+    let pc_value = vm.get_register_value(registers::RPC)?;
+    vm.update_register_value(registers::RR7, pc_value)?;
 
     match instr & 0xFF {
         TRAP_GETC => {
@@ -25,26 +25,26 @@ pub fn trap(instr: u16, vm: &mut VM) {
             let mut buf = [0; 1];
             io::stdin().read_exact(&mut buf).unwrap();
 
-            vm.update_register_value(registers::RR0, buf[0] as u16);
+            vm.update_register_value(registers::RR0, buf[0] as u16)?;
         }
         TRAP_OUT => {
             //Write a character in R0 to the console display.
 
-            let c = vm.get_register_value(registers::RR0) as u8;
+            let c = vm.get_register_value(registers::RR0)? as u8;
             print!("{}", c as char);
             io::stdout().flush().expect("failed to flush");
         }
         TRAP_PUTS => {
             // Write a string of ASCII characters to the console display.
 
-            let mut index = vm.get_register_value(registers::RR0);
-            let mut c = vm.mem_read(index);
+            let mut index = vm.get_register_value(registers::RR0)?;
+            let mut c = vm.mem_read(index)?;
 
             // 0x0000 is a the NULL character equivalent
             while c != 0x0000 {
                 print!("{}", (c as u8) as char);
                 index += 1;
-                c = vm.mem_read(index);
+                c = vm.mem_read(index)?;
             }
             io::stdout().flush().expect("failed to flush");
         }
@@ -61,14 +61,14 @@ pub fn trap(instr: u16, vm: &mut VM) {
             print!("{}", c as char);
             io::stdout().flush().expect("failed to flush");
 
-            vm.update_register_value(registers::RR0, c as u16);
-            vm.update_flags(registers::RR0);
+            vm.update_register_value(registers::RR0, c as u16)?;
+            vm.update_flags(registers::RR0)?;
         }
         TRAP_PUTSP => {
             // Write a string of ASCII characters to the console in parts (first half, second half)
 
-            let mut index = vm.get_register_value(registers::RR0);
-            let mut c = vm.mem_read(index);
+            let mut index = vm.get_register_value(registers::RR0)?;
+            let mut c = vm.mem_read(index)?;
 
             // 0x0000 is a the NULL character equivalent
             while c != 0x0000 {
@@ -79,7 +79,7 @@ pub fn trap(instr: u16, vm: &mut VM) {
                     print!("{}", (char_2 as u8) as char);
                 }
                 index += 1;
-                c = vm.mem_read(index);
+                c = vm.mem_read(index)?;
             }
             io::stdout().flush().expect("failed to flush");
         }
@@ -94,6 +94,8 @@ pub fn trap(instr: u16, vm: &mut VM) {
             process::exit(1);
         }
     }
+
+    Ok(())
 }
 
 #[cfg(test)]
@@ -109,15 +111,15 @@ mod tests {
         //Check that the value of the PC is saved in R7
         let mut vm = VM::new();
 
-        vm.update_register_value(registers::RR1, 16);
+        vm.update_register_value(registers::RR1, 16).unwrap();
 
         // This means 'Increment PC in the content in the base register'
         let jmp_instr: u16 = 0b1100000001000000;
-        jmp(jmp_instr, &mut vm);
+        jmp(jmp_instr, &mut vm).unwrap();
 
-        trap(TRAP_OUT, &mut vm);
+        trap(TRAP_OUT, &mut vm).unwrap();
 
-        assert_eq!(16, vm.get_register_value(registers::RR7));
+        assert_eq!(16, vm.get_register_value(registers::RR7).unwrap());
     }
 
     // I imagine other tests, but for that cases i would have to mock i/o operations
