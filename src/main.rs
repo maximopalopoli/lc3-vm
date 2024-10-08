@@ -1,5 +1,5 @@
-pub mod hardware;
 pub mod errors;
+pub mod hardware;
 
 use errors::VmError;
 use hardware::opcodes::opcodes_values;
@@ -128,8 +128,10 @@ fn main() {
     if let Err(e) = execute_program(&mut vm) {
         match e {
             VmError::OutOfBoundsError => {
-                println!("Error accesing registers: the number intended to access was out of bounds");
-                return;                
+                println!(
+                    "Error accesing registers: the number intended to access was out of bounds"
+                );
+                return;
             }
             VmError::KeyboardInputError(e) => {
                 println!("Error while receiving input from keyboard: {}", e);

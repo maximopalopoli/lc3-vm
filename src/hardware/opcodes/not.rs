@@ -27,7 +27,8 @@ mod tests {
         // Not puts in a destination register the result of the not operation on the base register
 
         let mut vm = VM::new();
-        vm.update_register_value(registers::RR1, u16::max_value()).unwrap();
+        vm.update_register_value(registers::RR1, u16::max_value())
+            .unwrap();
         vm.update_register_value(registers::RR2, 5).unwrap();
 
         // This means 'Put in the destination register the result of the not operation on the base register'

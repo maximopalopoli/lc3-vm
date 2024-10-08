@@ -1,5 +1,8 @@
 use super::utils;
-use crate::{errors::VmError, hardware::{registers, vm::VM}};
+use crate::{
+    errors::VmError,
+    hardware::{registers, vm::VM},
+};
 
 pub fn br(instr: u16, vm: &mut VM) -> Result<(), VmError> {
     // PCoffset (9 bits)
@@ -116,7 +119,8 @@ mod tests {
         let mut vm = VM::new();
 
         // Set a value bc can be initialized with garbage
-        vm.update_register_value(registers::RCOND, condition_flags::FL_POS).unwrap();
+        vm.update_register_value(registers::RCOND, condition_flags::FL_POS)
+            .unwrap();
 
         // This means 'Increment PC in an PCoffset, no matter what happened in last operation'
         let br_instr = 0b0000111011100001;

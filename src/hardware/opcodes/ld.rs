@@ -52,7 +52,8 @@ mod tests {
         // When putting a negative value, ld sets negative flag on
 
         let mut vm = VM::new();
-        vm.update_register_value(registers::RR1, u16::max_value()).unwrap();
+        vm.update_register_value(registers::RR1, u16::max_value())
+            .unwrap();
 
         // This means 'Put at offset direction of memory the content of the source register'
         let st_instr: u16 = 0b0011001000000001;

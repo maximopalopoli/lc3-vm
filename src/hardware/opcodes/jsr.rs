@@ -1,4 +1,7 @@
-use crate::{errors::VmError, hardware::{registers, vm::VM}};
+use crate::{
+    errors::VmError,
+    hardware::{registers, vm::VM},
+};
 
 use super::utils;
 

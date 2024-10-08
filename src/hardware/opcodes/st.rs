@@ -1,5 +1,8 @@
 use super::utils;
-use crate::{errors::VmError, hardware::{registers, vm::VM}};
+use crate::{
+    errors::VmError,
+    hardware::{registers, vm::VM},
+};
 
 pub fn st(instr: u16, vm: &mut VM) -> Result<(), VmError> {
     // source register (SR)

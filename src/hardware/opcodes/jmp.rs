@@ -1,4 +1,7 @@
-use crate::{errors::VmError, hardware::{registers::RPC, vm::VM}};
+use crate::{
+    errors::VmError,
+    hardware::{registers::RPC, vm::VM},
+};
 
 pub fn jmp(instr: u16, vm: &mut VM) -> Result<(), VmError> {
     let base_reg = (instr >> 6) & 0x7;

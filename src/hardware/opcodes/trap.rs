@@ -3,7 +3,10 @@ use std::{
     process,
 };
 
-use crate::{errors::VmError, hardware::{registers, vm::VM}};
+use crate::{
+    errors::VmError,
+    hardware::{registers, vm::VM},
+};
 
 pub const TRAP_GETC: u16 = 0x20;
 pub const TRAP_OUT: u16 = 0x21;

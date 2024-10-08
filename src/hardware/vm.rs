@@ -39,7 +39,7 @@ impl VM {
 
     fn handle_keyboard(&mut self) -> Result<(), VmError> {
         let mut buffer = [0; 1];
-        match std::io::stdin().read_exact(&mut buffer){
+        match std::io::stdin().read_exact(&mut buffer) {
             Ok(_) => {
                 if buffer[0] != 0 {
                     self.mem_write(memory::MR_KBSR, 1 << 15);
@@ -49,14 +49,11 @@ impl VM {
                 }
                 Ok(())
             }
-            Err(e) => {
-                Err(VmError::KeyboardInputError(e))
-            }
+            Err(e) => Err(VmError::KeyboardInputError(e)),
         }
-
     }
 
-    pub fn update_flags(&mut self, register_number: u16) -> Result<(), VmError>  {
+    pub fn update_flags(&mut self, register_number: u16) -> Result<(), VmError> {
         if register_number as usize > self.regs.len() {
             Err(VmError::OutOfBoundsError)
         } else {
@@ -68,25 +65,28 @@ impl VM {
             } else {
                 self.regs[registers::RCOND as usize] = condition_flags::FL_POS;
             }
-            Ok(())            
+            Ok(())
         }
-
     }
 
     pub fn get_register_value(&self, register_number: u16) -> Result<u16, VmError> {
         if register_number as usize > self.regs.len() {
             Err(VmError::OutOfBoundsError)
         } else {
-            Ok(self.regs[register_number as usize])            
+            Ok(self.regs[register_number as usize])
         }
     }
 
-    pub fn update_register_value(&mut self, register_number: u16, value: u16) -> Result<(), VmError> {
+    pub fn update_register_value(
+        &mut self,
+        register_number: u16,
+        value: u16,
+    ) -> Result<(), VmError> {
         if register_number as usize > self.regs.len() {
             Err(VmError::OutOfBoundsError)
         } else {
             self.regs[register_number as usize] = value;
-            Ok(())            
+            Ok(())
         }
     }
 }
