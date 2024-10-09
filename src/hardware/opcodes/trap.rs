@@ -27,7 +27,9 @@ pub fn trap(instr: u16, vm: &mut VM) -> Result<(), VmError> {
             //console. Its ASCII code is copied into R0. The high eight bits of R0 are cleared.
 
             let mut buf = [0; 1];
-            io::stdin().read_exact(&mut buf).unwrap();
+            if let Err(e) = io::stdin().read_exact(&mut buf) {
+                return Err(VmError::KeyboardInputError(e));
+            }
 
             vm.update_register_value(registers::RR0, buf[0] as u16)?;
         }
@@ -59,7 +61,9 @@ pub fn trap(instr: u16, vm: &mut VM) -> Result<(), VmError> {
             println!("Enter a character: ");
 
             let mut buf: [u8; 1] = [0; 1];
-            io::stdin().read_exact(&mut buf).unwrap();
+            if let Err(e) = io::stdin().read_exact(&mut buf) {
+                return Err(VmError::KeyboardInputError(e));
+            }
 
             let c = buf[0];
             print!("{}", c as char);
