@@ -68,6 +68,7 @@ fn execute_program(vm: &mut VM) -> Result<(), VmError> {
     while vm.get_register_value(hardware::registers::RPC)? < hardware::memory::MEMORY_MAX as u16 {
         let instruction = vm.mem_read(vm.get_register_value(hardware::registers::RPC)?)?;
 
+        // Increase pc
         let current_pc = vm.get_register_value(hardware::registers::RPC)?;
         vm.update_register_value(hardware::registers::RPC, current_pc + 1)?;
 
@@ -83,6 +84,7 @@ fn main() {
         return;
     }
 
+    // Termios set up
     let stdin = 0;
     let termios = termios::Termios::from_fd(stdin).expect("Error initializing termios from stdin");
 
@@ -92,6 +94,7 @@ fn main() {
 
     tcsetattr(stdin, TCSANOW, &new_termios).expect("Error from termios when setting parameters");
 
+    // File read
     let f = match File::open(args[1].clone()) {
         Ok(file) => file,
         Err(e) => {
@@ -125,6 +128,7 @@ fn main() {
         }
     }
 
+    // Execute program and check for errors
     if let Err(e) = execute_program(&mut vm) {
         match e {
             VmError::OutOfBoundsError => {
@@ -140,5 +144,6 @@ fn main() {
         }
     }
 
+    // Reset terminal settings
     tcsetattr(stdin, TCSANOW, &termios).expect("Error from termios when reseting parameters");
 }

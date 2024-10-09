@@ -14,11 +14,12 @@ pub fn jsr(instr: u16, vm: &mut VM) -> Result<(), VmError> {
     vm.update_register_value(registers::RR7, vm.get_register_value(registers::RPC)?)?;
 
     if use_offset != 0 {
-        // Use casting to avoid overflow
+        // Inscreases pc in the value of the offset. Use casting to avoid overflow
         let pc_offset = utils::sign_extend(instr & 0x7ff, 11);
         let val: u32 = vm.get_register_value(registers::RPC)? as u32 + pc_offset as u32;
         vm.update_register_value(registers::RPC, val as u16)?;
     } else {
+        // Updates pc with the value of the register.
         let base_reg = (instr >> 6) & 0x7;
         vm.update_register_value(registers::RPC, vm.get_register_value(base_reg)?)?;
     }

@@ -2,7 +2,7 @@ use crate::{errors::VmError, hardware::vm::VM};
 
 use super::utils;
 
-/// Depending on a flag, performs an add between two numbers or a number and an imm5 and puts the results of the operation in a destination register, and then update the flags
+/// Depending on a flag, performs an and between two numbers or a number with an imm5 and puts the results of the operation in a destination register, and then update the flags
 pub fn and(instr: u16, vm: &mut VM) -> Result<(), VmError> {
     // destination register (DR)
     let dest_reg = (instr >> 9) & 0x7;
@@ -14,10 +14,11 @@ pub fn and(instr: u16, vm: &mut VM) -> Result<(), VmError> {
     let imm_flag = (instr >> 5) & 0x1;
 
     if imm_flag == 1 {
-        // The five bits to extend
+        // Get the secont arg from the five bits to extend and puts in the dest_reg the and operation result
         let imm5 = utils::sign_extend(instr & 0x1F, 5);
         vm.update_register_value(dest_reg, vm.get_register_value(sr1)? & imm5)?;
     } else {
+        // Get the second reg from instr and puts in the dest_reg the and operation result
         let r2 = instr & 0x7;
         vm.update_register_value(
             dest_reg,
@@ -40,7 +41,7 @@ mod tests {
 
     #[test]
     fn test_01() {
-        // Doing an add with two numbers in registers makes the sum and lefts it in a third register
+        // Doing an and with two numbers in registers makes the sum and lefts it in a third register
 
         let mut vm = VM::new();
         vm.update_register_value(registers::RR1, 2).unwrap();
@@ -56,7 +57,7 @@ mod tests {
 
     #[test]
     fn test_02() {
-        // Doing an add with one register number and an imm5 makes the sum and lefts the result it in a third register
+        // Doing an and with one register number and an imm5 makes the sum and lefts the result it in a third register
 
         let mut vm = VM::new();
         vm.update_register_value(registers::RR1, 15).unwrap();

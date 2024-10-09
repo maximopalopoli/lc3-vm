@@ -21,6 +21,7 @@ pub fn add(instr: u16, vm: &mut VM) -> Result<(), VmError> {
         let val: u32 = imm5 as u32 + vm.get_register_value(sr1)? as u32;
         vm.update_register_value(dest_reg, val as u16)?;
     } else {
+        // Get the second reg from instr and puts in the dest_reg the and operation result
         let r2 = instr & 0x7;
 
         let val: u32 = vm.get_register_value(sr1)? as u32 + vm.get_register_value(r2)? as u32;
