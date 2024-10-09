@@ -1,17 +1,13 @@
-
-
 // Cond Flags
 pub const FL_POS: u16 = 1 << 0;
 pub const FL_ZRO: u16 = 1 << 1; /* Z */
 pub const FL_NEG: u16 = 1 << 2; /* N */
-
 
 // Memory
 pub const MEMORY_MAX: usize = u16::MAX as usize;
 
 pub const MR_KBSR: u16 = 0xFE00; /* keyboard status */
 pub const MR_KBDR: u16 = 0xFE02; /* keyboard data */
-
 
 // Registers
 pub const RR0: u16 = 0;

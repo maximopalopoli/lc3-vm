@@ -163,5 +163,5 @@ mod tests {
         let result = vm.update_register_value(100, value);
 
         assert!(result.is_err());
-    } 
+    }
 }

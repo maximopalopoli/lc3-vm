@@ -1,5 +1,5 @@
-use crate::{errors::VmError, VM};
 use super::consts;
+use crate::{errors::VmError, VM};
 
 pub const OP_BR: u16 = 0; /* branch */
 pub const OP_ADD: u16 = 1; /* add  */
@@ -18,7 +18,6 @@ pub const OP_RES: u16 = 13; /* reserved (unused) */
 pub const OP_LEA: u16 = 14; /* load effective address */
 pub const OP_TRAP: u16 = 15; /* execute trap */
 
-
 /// If the first number from left to right is a 1, extends the 1. Otherwise, returns the original value
 pub fn sign_extend(mut x: u16, bit_count: i32) -> u16 {
     if (x >> (bit_count - 1)) & 1 != 0 {
@@ -27,11 +26,7 @@ pub fn sign_extend(mut x: u16, bit_count: i32) -> u16 {
     x
 }
 
-
-
-
 // ADD
-
 
 /// Depending on a flag, adds two numbers or a number and an imm5 and puts the results of the operation in a destination register, and then update the flags
 pub fn add(instr: u16, vm: &mut VM) -> Result<(), VmError> {
@@ -66,9 +61,9 @@ pub fn add(instr: u16, vm: &mut VM) -> Result<(), VmError> {
 
 #[cfg(test)]
 mod tests_add {
+    use super::add;
     use crate::hardware::consts;
     use crate::hardware::vm::VM;
-    use super::add;
 
     #[test]
     fn test_01() {
@@ -156,7 +151,6 @@ mod tests_add {
     }
 }
 
-
 // AND
 
 /// Depending on a flag, performs an and between two numbers or a number with an imm5 and puts the results of the operation in a destination register, and then update the flags
@@ -190,9 +184,9 @@ pub fn and(instr: u16, vm: &mut VM) -> Result<(), VmError> {
 
 #[cfg(test)]
 mod tests_and {
+    use super::and;
     use crate::hardware::consts;
     use crate::hardware::vm::VM;
-    use super::and;
 
     #[test]
     fn test_01() {
@@ -261,7 +255,6 @@ mod tests_and {
         );
     }
 }
-
 
 // BR
 
@@ -390,7 +383,6 @@ mod tests_br {
     }
 }
 
-
 // JMP
 
 /// Sets the pc as the value in the base register
@@ -402,8 +394,8 @@ pub fn jmp(instr: u16, vm: &mut VM) -> Result<(), VmError> {
 
 #[cfg(test)]
 mod tests_jmp {
-    use crate::hardware::{vm::VM, consts};
-    use super::{jsr, jmp};
+    use super::{jmp, jsr};
+    use crate::hardware::{consts, vm::VM};
 
     #[test]
     fn test_01() {
@@ -442,7 +434,6 @@ mod tests_jmp {
     }
 }
 
-
 // JSR
 
 /// Saves the RPC value on the R7, and then, depending on a flag, increments the pc in an offset, or sets the pc as the value of a base_reg
@@ -469,8 +460,8 @@ pub fn jsr(instr: u16, vm: &mut VM) -> Result<(), VmError> {
 
 #[cfg(test)]
 mod tests_jsr {
-    use super::{jsr, jmp};
-    use crate::hardware::{vm::VM, consts};
+    use super::{jmp, jsr};
+    use crate::hardware::{consts, vm::VM};
 
     #[test]
     fn test_01() {
@@ -510,7 +501,6 @@ mod tests_jsr {
     }
 }
 
-
 // LD
 
 /// Loads in a destination register the value stored in pc plus an pc_offset, and then update the flags
@@ -533,8 +523,8 @@ pub fn ld(instr: u16, vm: &mut VM) -> Result<(), VmError> {
 
 #[cfg(test)]
 mod tests_ld {
-    use crate::hardware::{consts, vm::VM};
     use super::{ld, st};
+    use crate::hardware::{consts, vm::VM};
 
     #[test]
     fn test_01() {
@@ -575,7 +565,6 @@ mod tests_ld {
     }
 }
 
-
 // LDI
 
 /// Loads in a destination register the value stored in the direction obtained by the sum of pc and pc_offset, and then update the flags
@@ -598,8 +587,8 @@ pub fn ldi(instr: u16, vm: &mut VM) -> Result<(), VmError> {
 
 #[cfg(test)]
 mod tests_ldi {
-    use crate::hardware::{consts, vm::VM};
     use super::{ldi, st};
+    use crate::hardware::{consts, vm::VM};
 
     #[test]
     fn test_01() {
@@ -641,7 +630,6 @@ mod tests_ldi {
     }
 }
 
-
 // LDR
 
 /// Loads in a destination register the value stored in the value in a base register plus an pc_offset, and then update the flags
@@ -668,9 +656,8 @@ pub fn ldr(instr: u16, vm: &mut VM) -> Result<(), VmError> {
 
 #[cfg(test)]
 mod tests_ldr {
-    use crate::{
-        hardware::consts, hardware::vm::VM};
     use super::{ldr, st};
+    use crate::{hardware::consts, hardware::vm::VM};
 
     #[test]
     fn test_01() {
@@ -707,7 +694,6 @@ mod tests_ldr {
     }
 }
 
-
 // LEA
 
 // Loads in a destination register the sum between pc and an pc_offset, and then update the flags
@@ -729,8 +715,8 @@ pub fn lea(instr: u16, vm: &mut VM) -> Result<(), VmError> {
 
 #[cfg(test)]
 mod tests_lea {
-    use crate::hardware::{vm::VM, consts};
-    use super::{lea, jmp};
+    use super::{jmp, lea};
+    use crate::hardware::{consts, vm::VM};
 
     #[test]
     fn test_01() {
@@ -750,7 +736,6 @@ mod tests_lea {
         assert_eq!(47, vm.get_register_value(consts::RR4).unwrap());
     }
 }
-
 
 // NOT
 
@@ -772,8 +757,8 @@ pub fn not(instr: u16, vm: &mut VM) -> Result<(), VmError> {
 
 #[cfg(test)]
 mod tests_not {
-    use crate::hardware::{vm::VM, consts};
     use super::not;
+    use crate::hardware::{consts, vm::VM};
 
     #[test]
     fn test_01() {
@@ -827,7 +812,6 @@ mod tests_not {
     }
 }
 
-
 // ST
 
 /// Puts in source register the value stored in pc + a pc_offset
@@ -851,8 +835,8 @@ pub fn st(instr: u16, vm: &mut VM) -> Result<(), VmError> {
 
 #[cfg(test)]
 mod tests_st {
-    use super::{st, ld};
-    use crate::hardware::{vm::VM, consts};
+    use super::{ld, st};
+    use crate::hardware::{consts, vm::VM};
 
     #[test]
     fn test_01() {
@@ -872,7 +856,6 @@ mod tests_st {
         assert_eq!(16, vm.get_register_value(consts::RR3).unwrap());
     }
 }
-
 
 // STI
 
@@ -899,8 +882,8 @@ pub fn sti(instr: u16, vm: &mut VM) -> Result<(), VmError> {
 
 #[cfg(test)]
 mod tests_sti {
-    use super::{sti, st, ld};
-    use crate::hardware::{vm::VM, consts};
+    use super::{ld, st, sti};
+    use crate::hardware::{consts, vm::VM};
 
     #[test]
     fn test_01() {
@@ -925,7 +908,6 @@ mod tests_sti {
         assert_eq!(47, vm.get_register_value(consts::RR3).unwrap());
     }
 }
-
 
 // STR
 
@@ -953,8 +935,8 @@ pub fn str(instr: u16, vm: &mut VM) -> Result<(), VmError> {
 
 #[cfg(test)]
 mod tests_str {
-    use super::{str, ld};
-    use crate::hardware::{vm::VM, consts};
+    use super::{ld, str};
+    use crate::hardware::{consts, vm::VM};
 
     #[test]
     fn test_01() {
@@ -975,7 +957,6 @@ mod tests_str {
         assert_eq!(57, vm.get_register_value(consts::RR3).unwrap());
     } // This test is similar to the thing I would test with de load type instructions
 }
-
 
 // TRAP
 use std::{
@@ -1083,9 +1064,8 @@ pub fn trap(instr: u16, vm: &mut VM) -> Result<(), VmError> {
 
 #[cfg(test)]
 mod tests_trap {
-    use crate::
-        hardware::{consts, vm::VM};
     use super::{jmp, trap, TRAP_OUT};
+    use crate::hardware::{consts, vm::VM};
 
     #[test]
     fn test_01() {

@@ -96,7 +96,7 @@ fn main() -> Result<(), VmError> {
     let f = match File::open(args[1].clone()) {
         Ok(file) => file,
         Err(e) => {
-            return Err(VmError::IncorrectFileNameError(args[1].clone(), e)) ;
+            return Err(VmError::IncorrectFileNameError(args[1].clone(), e));
         }
     };
     let mut file = BufReader::new(f);
