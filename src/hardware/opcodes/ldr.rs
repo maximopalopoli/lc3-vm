@@ -27,7 +27,7 @@ pub fn ldr(instr: u16, vm: &mut VM) -> Result<(), VmError> {
 #[cfg(test)]
 mod tests {
     use crate::{
-        hardware::{condition_flags, registers, vm::VM},
+        hardware::{consts, vm::VM},
         ldr::ldr,
         st::st,
     };
@@ -38,8 +38,8 @@ mod tests {
 
         let mut vm = VM::new();
 
-        vm.update_register_value(registers::RR1, 49).unwrap();
-        vm.update_register_value(registers::RR2, 16).unwrap();
+        vm.update_register_value(consts::RR1, 49).unwrap();
+        vm.update_register_value(consts::RR2, 16).unwrap();
 
         // This means 'Put at offset direction of memory the content of the source register'
         let st_instr: u16 = 0b0011001000011111; // 31
@@ -49,8 +49,8 @@ mod tests {
         let ldr_instr: u16 = 0b0110011010001111;
         ldr(ldr_instr, &mut vm).unwrap();
 
-        assert_eq!(49, vm.get_register_value(registers::RR3).unwrap());
-        assert!(vm.get_register_value(registers::RCOND).unwrap() == condition_flags::FL_POS);
+        assert_eq!(49, vm.get_register_value(consts::RR3).unwrap());
+        assert!(vm.get_register_value(consts::RCOND).unwrap() == consts::FL_POS);
     }
 
     #[test]
@@ -63,6 +63,6 @@ mod tests {
         let ldr_instr: u16 = 0b0110001000000001;
         ldr(ldr_instr, &mut vm).unwrap();
 
-        assert!(vm.get_register_value(registers::RCOND).unwrap() == condition_flags::FL_ZRO);
+        assert!(vm.get_register_value(consts::RCOND).unwrap() == consts::FL_ZRO);
     }
 }

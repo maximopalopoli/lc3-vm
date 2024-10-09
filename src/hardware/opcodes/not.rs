@@ -18,10 +18,7 @@ pub fn not(instr: u16, vm: &mut VM) -> Result<(), VmError> {
 
 #[cfg(test)]
 mod tests {
-    use crate::hardware::condition_flags;
-    use crate::hardware::vm::VM;
-
-    use super::super::super::registers;
+    use crate::hardware::{vm::VM, consts};
     use super::not;
 
     #[test]
@@ -29,15 +26,15 @@ mod tests {
         // Not puts in a destination register the result of the not operation on the base register
 
         let mut vm = VM::new();
-        vm.update_register_value(registers::RR1, u16::max_value())
+        vm.update_register_value(consts::RR1, u16::max_value())
             .unwrap();
-        vm.update_register_value(registers::RR2, 5).unwrap();
+        vm.update_register_value(consts::RR2, 5).unwrap();
 
         // This means 'Put in the destination register the result of the not operation on the base register'
         let instr: u16 = 0b1001010001111111;
         not(instr, &mut vm).unwrap();
 
-        assert_eq!(0, vm.get_register_value(registers::RR2).unwrap());
+        assert_eq!(0, vm.get_register_value(consts::RR2).unwrap());
     }
 
     #[test]
@@ -45,15 +42,15 @@ mod tests {
         // When performing with a positive number, sets the negative flag on
 
         let mut vm = VM::new();
-        vm.update_register_value(registers::RR1, 6).unwrap();
+        vm.update_register_value(consts::RR1, 6).unwrap();
 
         // This means 'Put in the destination register the result of the not operation on the base register'
         let instr: u16 = 0b1001010001111111;
         not(instr, &mut vm).unwrap();
 
         assert_eq!(
-            condition_flags::FL_NEG,
-            vm.get_register_value(registers::RCOND).unwrap()
+            consts::FL_NEG,
+            vm.get_register_value(consts::RCOND).unwrap()
         );
     }
 
@@ -62,7 +59,7 @@ mod tests {
         // When performing with a 'negative' number, sets the positive flag on
 
         let mut vm = VM::new();
-        vm.update_register_value(registers::RR1, u16::max_value() - 10)
+        vm.update_register_value(consts::RR1, u16::max_value() - 10)
             .unwrap();
 
         // This means 'Put in the destination register the result of the not operation on the base register'
@@ -70,8 +67,8 @@ mod tests {
         not(instr, &mut vm).unwrap();
 
         assert_eq!(
-            condition_flags::FL_POS,
-            vm.get_register_value(registers::RCOND).unwrap()
+            consts::FL_POS,
+            vm.get_register_value(consts::RCOND).unwrap()
         );
     }
 }

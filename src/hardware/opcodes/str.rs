@@ -26,9 +26,8 @@ pub fn str(instr: u16, vm: &mut VM) -> Result<(), VmError> {
 
 #[cfg(test)]
 mod tests {
-    use super::super::super::registers;
     use super::str;
-    use crate::hardware::vm::VM;
+    use crate::hardware::{vm::VM, consts};
     use crate::ld::ld;
 
     #[test]
@@ -36,8 +35,8 @@ mod tests {
         // str puts in the memory direction defined by the offset and the base register the content of the source register
 
         let mut vm = VM::new();
-        vm.update_register_value(registers::RR1, 16).unwrap();
-        vm.update_register_value(registers::RR2, 57).unwrap();
+        vm.update_register_value(consts::RR1, 16).unwrap();
+        vm.update_register_value(consts::RR2, 57).unwrap();
 
         // This means 'Put at (offset + reg value) direction of memory the content of the source register'
         let str_instr: u16 = 0b0111010001000001;
@@ -47,6 +46,6 @@ mod tests {
         let ld_instr: u16 = 0b0010011000010001;
         ld(ld_instr, &mut vm).unwrap();
 
-        assert_eq!(57, vm.get_register_value(registers::RR3).unwrap());
+        assert_eq!(57, vm.get_register_value(consts::RR3).unwrap());
     } // This test is similar to the thing I would test with de load type instructions
 }

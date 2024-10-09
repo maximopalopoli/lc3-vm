@@ -65,12 +65,12 @@ fn execute_instruction(instr: u16, vm: &mut VM) -> Result<(), VmError> {
 }
 
 fn execute_program(vm: &mut VM) -> Result<(), VmError> {
-    while vm.get_register_value(hardware::registers::RPC)? < hardware::memory::MEMORY_MAX as u16 {
-        let instruction = vm.mem_read(vm.get_register_value(hardware::registers::RPC)?)?;
+    while vm.get_register_value(hardware::consts::RPC)? < hardware::consts::MEMORY_MAX as u16 {
+        let instruction = vm.mem_read(vm.get_register_value(hardware::consts::RPC)?)?;
 
         // Increase pc
-        let current_pc = vm.get_register_value(hardware::registers::RPC)?;
-        vm.update_register_value(hardware::registers::RPC, current_pc + 1)?;
+        let current_pc = vm.get_register_value(hardware::consts::RPC)?;
+        vm.update_register_value(hardware::consts::RPC, current_pc + 1)?;
 
         execute_instruction(instruction, vm)?;
     }

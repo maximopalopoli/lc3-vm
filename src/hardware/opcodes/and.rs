@@ -33,10 +33,8 @@ pub fn and(instr: u16, vm: &mut VM) -> Result<(), VmError> {
 
 #[cfg(test)]
 mod tests {
-    use crate::hardware::condition_flags;
+    use crate::hardware::consts;
     use crate::hardware::vm::VM;
-
-    use super::super::super::registers;
     use super::and;
 
     #[test]
@@ -44,15 +42,15 @@ mod tests {
         // Doing an and with two numbers in registers makes the sum and lefts it in a third register
 
         let mut vm = VM::new();
-        vm.update_register_value(registers::RR1, 2).unwrap();
-        vm.update_register_value(registers::RR2, 3).unwrap();
+        vm.update_register_value(consts::RR1, 2).unwrap();
+        vm.update_register_value(consts::RR2, 3).unwrap();
 
         // This means 'Do an AND with RR1 and RR2 and put the result on RR3'
         let instr: u16 = 0b0101011001000010;
 
         and(instr, &mut vm).unwrap();
 
-        assert_eq!(2, vm.get_register_value(registers::RR3).unwrap());
+        assert_eq!(2, vm.get_register_value(consts::RR3).unwrap());
     }
 
     #[test]
@@ -60,14 +58,14 @@ mod tests {
         // Doing an and with one register number and an imm5 makes the sum and lefts the result it in a third register
 
         let mut vm = VM::new();
-        vm.update_register_value(registers::RR1, 15).unwrap();
+        vm.update_register_value(consts::RR1, 15).unwrap();
 
         // This means 'Do an AND with RR1 and an imm5 and put the result on RR3'
         let instr: u16 = 0b0101011001100111;
 
         and(instr, &mut vm).unwrap();
 
-        assert_eq!(7, vm.get_register_value(registers::RR3).unwrap());
+        assert_eq!(7, vm.get_register_value(consts::RR3).unwrap());
     }
 
     #[test]
@@ -75,7 +73,7 @@ mod tests {
         // Perform an and with a positive result lets turned on the positive flag
 
         let mut vm = VM::new();
-        vm.update_register_value(registers::RR1, 3).unwrap();
+        vm.update_register_value(consts::RR1, 3).unwrap();
 
         // This means 'Do an and with RR1 and an imm5 and put the result on RR3'
         let instr: u16 = 0b0001011001100111;
@@ -83,8 +81,8 @@ mod tests {
         and(instr, &mut vm).unwrap();
 
         assert_eq!(
-            condition_flags::FL_POS,
-            vm.get_register_value(registers::RCOND).unwrap()
+            consts::FL_POS,
+            vm.get_register_value(consts::RCOND).unwrap()
         );
     }
 
@@ -93,7 +91,7 @@ mod tests {
         // Perform an and with a zero result lets turned on the positive flag
 
         let mut vm = VM::new();
-        vm.update_register_value(registers::RR1, 0).unwrap();
+        vm.update_register_value(consts::RR1, 0).unwrap();
 
         // This means 'Do an and with RR1 and an imm5 and put the result on RR3'
         let instr: u16 = 0b0001011001111111;
@@ -101,8 +99,8 @@ mod tests {
         and(instr, &mut vm).unwrap();
 
         assert_eq!(
-            condition_flags::FL_ZRO,
-            vm.get_register_value(registers::RCOND).unwrap()
+            consts::FL_ZRO,
+            vm.get_register_value(consts::RCOND).unwrap()
         );
     }
 }

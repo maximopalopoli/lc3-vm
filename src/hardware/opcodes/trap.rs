@@ -5,7 +5,7 @@ use std::{
 
 use crate::{
     errors::VmError,
-    hardware::{registers, vm::VM},
+    hardware::{consts, vm::VM},
 };
 
 pub const TRAP_GETC: u16 = 0x20;
@@ -18,8 +18,8 @@ pub const TRAP_HALT: u16 = 0x25;
 /// Performs the corresponding trap operation
 pub fn trap(instr: u16, vm: &mut VM) -> Result<(), VmError> {
     // Set the Reg7 to the PC value
-    let pc_value = vm.get_register_value(registers::RPC)?;
-    vm.update_register_value(registers::RR7, pc_value)?;
+    let pc_value = vm.get_register_value(consts::RPC)?;
+    vm.update_register_value(consts::RR7, pc_value)?;
 
     match instr & 0xFF {
         TRAP_GETC => {
@@ -31,19 +31,19 @@ pub fn trap(instr: u16, vm: &mut VM) -> Result<(), VmError> {
                 return Err(VmError::KeyboardInputError(e));
             }
 
-            vm.update_register_value(registers::RR0, buf[0] as u16)?;
+            vm.update_register_value(consts::RR0, buf[0] as u16)?;
         }
         TRAP_OUT => {
             //Write a character in R0 to the console display.
 
-            let c = vm.get_register_value(registers::RR0)? as u8;
+            let c = vm.get_register_value(consts::RR0)? as u8;
             print!("{}", c as char);
             io::stdout().flush().expect("failed to flush");
         }
         TRAP_PUTS => {
             // Write a string of ASCII characters to the console display.
 
-            let mut index = vm.get_register_value(registers::RR0)?;
+            let mut index = vm.get_register_value(consts::RR0)?;
             let mut c = vm.mem_read(index)?;
 
             // 0x0000 is a the NULL character equivalent
@@ -69,13 +69,13 @@ pub fn trap(instr: u16, vm: &mut VM) -> Result<(), VmError> {
             print!("{}", c as char);
             io::stdout().flush().expect("failed to flush");
 
-            vm.update_register_value(registers::RR0, c as u16)?;
-            vm.update_flags(registers::RR0)?;
+            vm.update_register_value(consts::RR0, c as u16)?;
+            vm.update_flags(consts::RR0)?;
         }
         TRAP_PUTSP => {
             // Write a string of ASCII characters to the console in parts (first half, second half)
 
-            let mut index = vm.get_register_value(registers::RR0)?;
+            let mut index = vm.get_register_value(consts::RR0)?;
             let mut c = vm.mem_read(index)?;
 
             // 0x0000 is a the NULL character equivalent
@@ -109,7 +109,7 @@ pub fn trap(instr: u16, vm: &mut VM) -> Result<(), VmError> {
 #[cfg(test)]
 mod tests {
     use crate::{
-        hardware::{registers, vm::VM},
+        hardware::{consts, vm::VM},
         jmp::jmp,
         trap::{trap, TRAP_OUT},
     };
@@ -119,7 +119,7 @@ mod tests {
         //Check that the value of the PC is saved in R7
         let mut vm = VM::new();
 
-        vm.update_register_value(registers::RR1, 16).unwrap();
+        vm.update_register_value(consts::RR1, 16).unwrap();
 
         // This means 'Increment PC in the content in the base register'
         let jmp_instr: u16 = 0b1100000001000000;
@@ -127,7 +127,7 @@ mod tests {
 
         trap(TRAP_OUT, &mut vm).unwrap();
 
-        assert_eq!(16, vm.get_register_value(registers::RR7).unwrap());
+        assert_eq!(16, vm.get_register_value(consts::RR7).unwrap());
     }
 
     // I imagine other tests, but for that cases i would have to mock i/o operations

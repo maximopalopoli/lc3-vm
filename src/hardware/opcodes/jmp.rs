@@ -1,6 +1,6 @@
 use crate::{
     errors::VmError,
-    hardware::{registers::RPC, vm::VM},
+    hardware::{consts::RPC, vm::VM},
 };
 
 /// Sets the pc as the value in the base register
@@ -12,10 +12,8 @@ pub fn jmp(instr: u16, vm: &mut VM) -> Result<(), VmError> {
 
 #[cfg(test)]
 mod tests {
-    use crate::hardware::vm::VM;
+    use crate::hardware::{vm::VM, consts};
     use crate::jsr::jsr;
-
-    use super::super::super::registers;
     use super::jmp;
 
     #[test]
@@ -23,13 +21,13 @@ mod tests {
         // Jump increments the pc in the passed register value
 
         let mut vm = VM::new();
-        vm.update_register_value(registers::RR1, 16).unwrap();
+        vm.update_register_value(consts::RR1, 16).unwrap();
 
         // This means 'Increment PC in the content in the base register'
         let instr: u16 = 0b1100000001000000;
         jmp(instr, &mut vm).unwrap();
 
-        assert_eq!(16, vm.get_register_value(registers::RPC).unwrap());
+        assert_eq!(16, vm.get_register_value(consts::RPC).unwrap());
     }
 
     #[test]
@@ -37,7 +35,7 @@ mod tests {
         // Jump returns to the original pc value after a jsr
 
         let mut vm = VM::new();
-        vm.update_register_value(registers::RR1, 16).unwrap();
+        vm.update_register_value(consts::RR1, 16).unwrap();
 
         // This means 'Set PC in the content in the base register'
         let instr: u16 = 0b1100000001000000;
@@ -51,6 +49,6 @@ mod tests {
         let instr: u16 = 0b1100000111000000;
         jmp(instr, &mut vm).unwrap();
 
-        assert_eq!(16, vm.get_register_value(registers::RPC).unwrap());
+        assert_eq!(16, vm.get_register_value(consts::RPC).unwrap());
     }
 }

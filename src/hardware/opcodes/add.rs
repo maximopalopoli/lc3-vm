@@ -35,10 +35,8 @@ pub fn add(instr: u16, vm: &mut VM) -> Result<(), VmError> {
 
 #[cfg(test)]
 mod tests {
-    use crate::hardware::condition_flags;
+    use crate::hardware::consts;
     use crate::hardware::vm::VM;
-
-    use super::super::super::registers;
     use super::add;
 
     #[test]
@@ -46,15 +44,15 @@ mod tests {
         // Adding two number with registers makes the sum and lefts it in a third register
 
         let mut vm = VM::new();
-        vm.update_register_value(registers::RR1, 1).unwrap();
-        vm.update_register_value(registers::RR2, 1).unwrap();
+        vm.update_register_value(consts::RR1, 1).unwrap();
+        vm.update_register_value(consts::RR2, 1).unwrap();
 
         // This means 'Add RR1 and RR2 and put the result on RR3'
         let instr: u16 = 0b0001011001000010;
 
         add(instr, &mut vm).unwrap();
 
-        assert_eq!(2, vm.get_register_value(registers::RR3).unwrap());
+        assert_eq!(2, vm.get_register_value(consts::RR3).unwrap());
     }
 
     #[test]
@@ -62,14 +60,14 @@ mod tests {
         // Adding one number with an imm5 makes the sum and lefts the result it in a third register
 
         let mut vm = VM::new();
-        vm.update_register_value(registers::RR1, 3).unwrap();
+        vm.update_register_value(consts::RR1, 3).unwrap();
 
         // This means 'Add RR1 and an imm5 and put the result on RR3'
         let instr: u16 = 0b0001011001100111;
 
         add(instr, &mut vm).unwrap();
 
-        assert_eq!(10, vm.get_register_value(registers::RR3).unwrap());
+        assert_eq!(10, vm.get_register_value(consts::RR3).unwrap());
     }
 
     #[test]
@@ -77,7 +75,7 @@ mod tests {
         // Adding with a positive result lets turned on the positive flag
 
         let mut vm = VM::new();
-        vm.update_register_value(registers::RR1, 3).unwrap();
+        vm.update_register_value(consts::RR1, 3).unwrap();
 
         // This means 'Add RR1 and an imm5 and put the result on RR3'
         let instr: u16 = 0b0001011001100111;
@@ -85,8 +83,8 @@ mod tests {
         add(instr, &mut vm).unwrap();
 
         assert_eq!(
-            condition_flags::FL_POS,
-            vm.get_register_value(registers::RCOND).unwrap()
+            consts::FL_POS,
+            vm.get_register_value(consts::RCOND).unwrap()
         );
     }
 
@@ -95,7 +93,7 @@ mod tests {
         // Adding with a zero result lets turned on the zero flag
 
         let mut vm = VM::new();
-        vm.update_register_value(registers::RR1, 0).unwrap();
+        vm.update_register_value(consts::RR1, 0).unwrap();
 
         // This means 'Add RR1 and an imm5 and put the result on RR3'
         let instr: u16 = 0b0001011001100000;
@@ -103,8 +101,8 @@ mod tests {
         add(instr, &mut vm).unwrap();
 
         assert_eq!(
-            condition_flags::FL_ZRO,
-            vm.get_register_value(registers::RCOND).unwrap()
+            consts::FL_ZRO,
+            vm.get_register_value(consts::RCOND).unwrap()
         );
     }
 
@@ -113,7 +111,7 @@ mod tests {
         // Adding with a negative result lets turned on the negative flag
 
         let mut vm = VM::new();
-        vm.update_register_value(registers::RR1, 0).unwrap();
+        vm.update_register_value(consts::RR1, 0).unwrap();
 
         // This means 'Add RR1 and an imm5 and put the result on RR3'
         let instr: u16 = 0b0001011001110000;
@@ -121,8 +119,8 @@ mod tests {
         add(instr, &mut vm).unwrap();
 
         assert_eq!(
-            condition_flags::FL_NEG,
-            vm.get_register_value(registers::RCOND).unwrap()
+            consts::FL_NEG,
+            vm.get_register_value(consts::RCOND).unwrap()
         );
     }
 }

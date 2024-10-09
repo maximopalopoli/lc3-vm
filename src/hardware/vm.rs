@@ -1,13 +1,11 @@
 use crate::errors::VmError;
 
-use super::condition_flags;
-use super::memory;
-use super::registers;
+use super::consts;
 
 use std::io::Read;
 
 pub struct VM {
-    memory: [u16; memory::MEMORY_MAX],
+    memory: [u16; consts::MEMORY_MAX],
     regs: [u16; 11],
 }
 
@@ -19,7 +17,7 @@ impl Default for VM {
 
 impl VM {
     pub fn new() -> Self {
-        let memory: [u16; memory::MEMORY_MAX] = [0; memory::MEMORY_MAX];
+        let memory: [u16; consts::MEMORY_MAX] = [0; consts::MEMORY_MAX];
         let regs: [u16; 11] = [0; 11];
         VM { memory, regs }
     }
@@ -31,7 +29,7 @@ impl VM {
 
     /// There is no way to access to a forbidden address since it's limited by the u16 limits
     pub fn mem_read(&mut self, address: u16) -> Result<u16, VmError> {
-        if address == memory::MR_KBSR {
+        if address == consts::MR_KBSR {
             self.handle_keyboard()?;
         }
         Ok(self.memory[address as usize])
@@ -42,10 +40,10 @@ impl VM {
         match std::io::stdin().read_exact(&mut buffer) {
             Ok(_) => {
                 if buffer[0] != 0 {
-                    self.mem_write(memory::MR_KBSR, 1 << 15);
-                    self.mem_write(memory::MR_KBDR, buffer[0] as u16);
+                    self.mem_write(consts::MR_KBSR, 1 << 15);
+                    self.mem_write(consts::MR_KBDR, buffer[0] as u16);
                 } else {
-                    self.mem_write(memory::MR_KBSR, 0)
+                    self.mem_write(consts::MR_KBSR, 0)
                 }
                 Ok(())
             }
@@ -58,12 +56,12 @@ impl VM {
             Err(VmError::OutOfBoundsError)
         } else {
             if self.regs[register_number as usize] == 0 {
-                self.regs[registers::RCOND as usize] = condition_flags::FL_ZRO;
+                self.regs[consts::RCOND as usize] = consts::FL_ZRO;
             } else if self.regs[register_number as usize] >> 15 == 1 {
                 // a 1 in the left-most bit indicates negative
-                self.regs[registers::RCOND as usize] = condition_flags::FL_NEG;
+                self.regs[consts::RCOND as usize] = consts::FL_NEG;
             } else {
-                self.regs[registers::RCOND as usize] = condition_flags::FL_POS;
+                self.regs[consts::RCOND as usize] = consts::FL_POS;
             }
             Ok(())
         }
