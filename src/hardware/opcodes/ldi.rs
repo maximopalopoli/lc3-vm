@@ -1,8 +1,10 @@
 use super::utils;
+use crate::errors::VmError;
 use crate::hardware::registers;
 use crate::hardware::vm::VM;
 
-pub fn ldi(instr: u16, vm: &mut VM) {
+/// Loads in a destination register the value stored in the direction obtained by the sum of pc and pc_offset, and then update the flags
+pub fn ldi(instr: u16, vm: &mut VM) -> Result<(), VmError> {
     // destination register (DR)
     let r0 = (instr >> 9) & 0x7;
 
@@ -10,11 +12,13 @@ pub fn ldi(instr: u16, vm: &mut VM) {
     let pc_offset = utils::sign_extend(instr & 0x1FF, 9);
 
     // add pc_offset to the current PC, look at that memory location to get the final address
-    let address_read = vm.mem_read(vm.get_register_value(registers::RPC) + pc_offset);
-    let value = vm.mem_read(address_read);
+    let address_read = vm.mem_read(vm.get_register_value(registers::RPC)? + pc_offset)?;
+    let value = vm.mem_read(address_read)?;
 
-    vm.update_register_value(r0, value);
-    vm.update_flags(r0);
+    vm.update_register_value(r0, value)?;
+    vm.update_flags(r0)?;
+
+    Ok(())
 }
 
 #[cfg(test)]
@@ -31,24 +35,24 @@ mod tests {
 
         let mut vm = VM::new();
 
-        vm.update_register_value(registers::RR1, 31);
+        vm.update_register_value(registers::RR1, 31).unwrap();
 
         // This means 'Put at offset direction of memory the content of the source register'
         let st1_instr: u16 = 0b0011001000000001; // 1
-        st(st1_instr, &mut vm);
+        st(st1_instr, &mut vm).unwrap();
 
-        vm.update_register_value(registers::RR2, 96);
+        vm.update_register_value(registers::RR2, 96).unwrap();
 
         // This means 'Put at offset direction of memory the content of the source register'
         let st2_instr: u16 = 0b0011010000011111; // 31
-        st(st2_instr, &mut vm);
+        st(st2_instr, &mut vm).unwrap();
 
         // This means 'Put at source register the content defined on the direction of memory product of pc+offset'
         let ldi_instr: u16 = 0b1010011000000001;
-        ldi(ldi_instr, &mut vm);
+        ldi(ldi_instr, &mut vm).unwrap();
 
-        assert_eq!(96, vm.get_register_value(registers::RR3));
-        assert!(vm.get_register_value(registers::RCOND) == condition_flags::FL_POS);
+        assert_eq!(96, vm.get_register_value(registers::RR3).unwrap());
+        assert!(vm.get_register_value(registers::RCOND).unwrap() == condition_flags::FL_POS);
     }
 
     #[test]
@@ -59,8 +63,8 @@ mod tests {
 
         // This means 'Put at source register the content defined on the direction of memory product of pc+offset'
         let ldi_instr: u16 = 0b1010011000000001;
-        ldi(ldi_instr, &mut vm);
+        ldi(ldi_instr, &mut vm).unwrap();
 
-        assert!(vm.get_register_value(registers::RCOND) == condition_flags::FL_ZRO);
+        assert!(vm.get_register_value(registers::RCOND).unwrap() == condition_flags::FL_ZRO);
     }
 }
