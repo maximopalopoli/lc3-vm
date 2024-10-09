@@ -76,11 +76,10 @@ fn execute_program(vm: &mut VM) -> Result<(), VmError> {
     Ok(())
 }
 
-fn main() {
+fn main() -> Result<(), VmError> {
     let args: Vec<String> = env::args().collect();
     if args.len() < 2 {
-        println!("Usage: lc3 [image-file1] ...\n");
-        return;
+        return Err(VmError::NotEnoughArguments);
     }
 
     // Termios set up
@@ -97,8 +96,7 @@ fn main() {
     let f = match File::open(args[1].clone()) {
         Ok(file) => file,
         Err(e) => {
-            println!("Error opening the file '{}': {}", args[1], e);
-            return;
+            return Err(VmError::IncorrectFileNameError(args[1].clone(), e)) ;
         }
     };
     let mut file = BufReader::new(f);
@@ -120,29 +118,18 @@ fn main() {
                     println!("OK")
                 } else {
                     println!("failed: {}", e);
-                    return; // Could be a corrupted file
+                    return Err(VmError::BadFileError(e)); // Could be a corrupted file
                 }
                 break;
             }
         }
     }
 
-    // Execute program and check for errors
-    if let Err(e) = execute_program(&mut vm) {
-        match e {
-            VmError::OutOfBoundsError => {
-                println!(
-                    "Error accesing registers: the number intended to access was out of bounds"
-                );
-                return;
-            }
-            VmError::KeyboardInputError(e) => {
-                println!("Error while receiving input from keyboard: {}", e);
-                return;
-            }
-        }
-    }
+    // Execute program
+    execute_program(&mut vm)?;
 
     // Reset terminal settings
     tcsetattr(stdin, TCSANOW, &termios).expect("Error from termios when reseting parameters");
+
+    Ok(())
 }
