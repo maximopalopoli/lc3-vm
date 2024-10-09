@@ -1082,7 +1082,7 @@ pub fn trap(instr: u16, vm: &mut VM) -> Result<(), VmError> {
 }
 
 #[cfg(test)]
-mod tests {
+mod tests_trap {
     use crate::
         hardware::{consts, vm::VM};
     use super::{jmp, trap, TRAP_OUT};
