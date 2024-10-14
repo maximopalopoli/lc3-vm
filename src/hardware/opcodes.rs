@@ -1,6 +1,11 @@
 use super::consts;
 use crate::{errors::VmError, VM};
 
+use std::{
+    io::{self, Read, Write},
+    process,
+};
+
 pub const OP_BR: u16 = 0; /* branch */
 pub const OP_ADD: u16 = 1; /* add  */
 pub const OP_LD: u16 = 2; /* load */
@@ -17,6 +22,13 @@ pub const OP_JMP: u16 = 12; /* jump */
 pub const OP_RES: u16 = 13; /* reserved (unused) */
 pub const OP_LEA: u16 = 14; /* load effective address */
 pub const OP_TRAP: u16 = 15; /* execute trap */
+
+pub const TRAP_GETC: u16 = 0x20;
+pub const TRAP_OUT: u16 = 0x21;
+pub const TRAP_PUTS: u16 = 0x22;
+pub const TRAP_IN: u16 = 0x23;
+pub const TRAP_PUTSP: u16 = 0x24;
+pub const TRAP_HALT: u16 = 0x25;
 
 /// If the first number from left to right is a 1, extends the 1. Otherwise, returns the original value
 pub fn sign_extend(mut x: u16, bit_count: i32) -> u16 {
@@ -59,98 +71,6 @@ pub fn add(instr: u16, vm: &mut VM) -> Result<(), VmError> {
     Ok(())
 }
 
-#[cfg(test)]
-mod tests_add {
-    use super::add;
-    use crate::hardware::consts;
-    use crate::hardware::vm::VM;
-
-    #[test]
-    fn test_01() {
-        // Adding two number with registers makes the sum and lefts it in a third register
-
-        let mut vm = VM::new();
-        vm.update_register_value(consts::RR1, 1).unwrap();
-        vm.update_register_value(consts::RR2, 1).unwrap();
-
-        // This means 'Add RR1 and RR2 and put the result on RR3'
-        let instr: u16 = 0b0001011001000010;
-
-        add(instr, &mut vm).unwrap();
-
-        assert_eq!(2, vm.get_register_value(consts::RR3).unwrap());
-    }
-
-    #[test]
-    fn test_02() {
-        // Adding one number with an imm5 makes the sum and lefts the result it in a third register
-
-        let mut vm = VM::new();
-        vm.update_register_value(consts::RR1, 3).unwrap();
-
-        // This means 'Add RR1 and an imm5 and put the result on RR3'
-        let instr: u16 = 0b0001011001100111;
-
-        add(instr, &mut vm).unwrap();
-
-        assert_eq!(10, vm.get_register_value(consts::RR3).unwrap());
-    }
-
-    #[test]
-    fn test_03() {
-        // Adding with a positive result lets turned on the positive flag
-
-        let mut vm = VM::new();
-        vm.update_register_value(consts::RR1, 3).unwrap();
-
-        // This means 'Add RR1 and an imm5 and put the result on RR3'
-        let instr: u16 = 0b0001011001100111;
-
-        add(instr, &mut vm).unwrap();
-
-        assert_eq!(
-            consts::FL_POS,
-            vm.get_register_value(consts::RCOND).unwrap()
-        );
-    }
-
-    #[test]
-    fn test_04() {
-        // Adding with a zero result lets turned on the zero flag
-
-        let mut vm = VM::new();
-        vm.update_register_value(consts::RR1, 0).unwrap();
-
-        // This means 'Add RR1 and an imm5 and put the result on RR3'
-        let instr: u16 = 0b0001011001100000;
-
-        add(instr, &mut vm).unwrap();
-
-        assert_eq!(
-            consts::FL_ZRO,
-            vm.get_register_value(consts::RCOND).unwrap()
-        );
-    }
-
-    #[test]
-    fn test_05() {
-        // Adding with a negative result lets turned on the negative flag
-
-        let mut vm = VM::new();
-        vm.update_register_value(consts::RR1, 0).unwrap();
-
-        // This means 'Add RR1 and an imm5 and put the result on RR3'
-        let instr: u16 = 0b0001011001110000;
-
-        add(instr, &mut vm).unwrap();
-
-        assert_eq!(
-            consts::FL_NEG,
-            vm.get_register_value(consts::RCOND).unwrap()
-        );
-    }
-}
-
 // AND
 
 /// Depending on a flag, performs an and between two numbers or a number with an imm5 and puts the results of the operation in a destination register, and then update the flags
@@ -182,80 +102,6 @@ pub fn and(instr: u16, vm: &mut VM) -> Result<(), VmError> {
     Ok(())
 }
 
-#[cfg(test)]
-mod tests_and {
-    use super::and;
-    use crate::hardware::consts;
-    use crate::hardware::vm::VM;
-
-    #[test]
-    fn test_01() {
-        // Doing an and with two numbers in registers makes the sum and lefts it in a third register
-
-        let mut vm = VM::new();
-        vm.update_register_value(consts::RR1, 2).unwrap();
-        vm.update_register_value(consts::RR2, 3).unwrap();
-
-        // This means 'Do an AND with RR1 and RR2 and put the result on RR3'
-        let instr: u16 = 0b0101011001000010;
-
-        and(instr, &mut vm).unwrap();
-
-        assert_eq!(2, vm.get_register_value(consts::RR3).unwrap());
-    }
-
-    #[test]
-    fn test_02() {
-        // Doing an and with one register number and an imm5 makes the sum and lefts the result it in a third register
-
-        let mut vm = VM::new();
-        vm.update_register_value(consts::RR1, 15).unwrap();
-
-        // This means 'Do an AND with RR1 and an imm5 and put the result on RR3'
-        let instr: u16 = 0b0101011001100111;
-
-        and(instr, &mut vm).unwrap();
-
-        assert_eq!(7, vm.get_register_value(consts::RR3).unwrap());
-    }
-
-    #[test]
-    fn test_03() {
-        // Perform an and with a positive result lets turned on the positive flag
-
-        let mut vm = VM::new();
-        vm.update_register_value(consts::RR1, 3).unwrap();
-
-        // This means 'Do an and with RR1 and an imm5 and put the result on RR3'
-        let instr: u16 = 0b0001011001100111;
-
-        and(instr, &mut vm).unwrap();
-
-        assert_eq!(
-            consts::FL_POS,
-            vm.get_register_value(consts::RCOND).unwrap()
-        );
-    }
-
-    #[test]
-    fn test_04() {
-        // Perform an and with a zero result lets turned on the positive flag
-
-        let mut vm = VM::new();
-        vm.update_register_value(consts::RR1, 0).unwrap();
-
-        // This means 'Do an and with RR1 and an imm5 and put the result on RR3'
-        let instr: u16 = 0b0001011001111111;
-
-        and(instr, &mut vm).unwrap();
-
-        assert_eq!(
-            consts::FL_ZRO,
-            vm.get_register_value(consts::RCOND).unwrap()
-        );
-    }
-}
-
 // BR
 
 /// Depending on the cond_flag, if it matches the current conditional register, then jumps to the position defined in the pc_offset
@@ -274,115 +120,6 @@ pub fn br(instr: u16, vm: &mut VM) -> Result<(), VmError> {
     Ok(())
 }
 
-#[cfg(test)]
-mod tests_br {
-    use super::{add, and, br};
-
-    use crate::hardware::consts;
-    use crate::hardware::vm::VM;
-
-    #[test]
-    fn test_01() {
-        // Make an operation that lefts the zero flag on, and then make a conditional branch
-
-        let mut vm = VM::new();
-        vm.update_register_value(consts::RR1, 0).unwrap();
-        vm.update_register_value(consts::RR2, 0).unwrap();
-
-        // This means 'Add RR1 and RR2 and put the result on RR3'
-        let add_instr: u16 = 0b0001011001000010;
-        add(add_instr, &mut vm).unwrap();
-
-        assert!(vm.get_register_value(consts::RCOND).unwrap() == consts::FL_ZRO);
-
-        // This means 'If last operation left flag zero, then increment PC in an PCoffset'
-        let br_instr = 0b0000010001100000;
-        br(br_instr, &mut vm).unwrap();
-
-        assert_eq!(96, vm.get_register_value(consts::RPC).unwrap());
-    }
-
-    #[test]
-    fn test_02() {
-        // Make an operation that lefts the positive flag on, and then make a conditional branch
-
-        let mut vm = VM::new();
-        vm.update_register_value(consts::RR1, 1).unwrap();
-        vm.update_register_value(consts::RR2, 4).unwrap();
-
-        // This means 'Add RR1 and RR2 and put the result on RR3'
-        let add_instr: u16 = 0b0001011001000010;
-        add(add_instr, &mut vm).unwrap();
-
-        assert!(vm.get_register_value(consts::RCOND).unwrap() == consts::FL_POS);
-
-        // This means 'If last operation left flag positive, then increment PC in an PCoffset'
-        let br_instr = 0b0000001001000001;
-        br(br_instr, &mut vm).unwrap();
-
-        assert_eq!(65, vm.get_register_value(consts::RPC).unwrap());
-    }
-
-    #[test]
-    fn test_03() {
-        // Make an operation that lefts the negative flag on, and then make a conditional branch
-
-        let mut vm = VM::new();
-        vm.update_register_value(consts::RR1, 1).unwrap();
-        vm.update_register_value(consts::RR2, 4).unwrap();
-
-        // This means 'Add RR1 and an imm5 and put the result on RR3'
-        let add_instr: u16 = 0b0001011001111110;
-        add(add_instr, &mut vm).unwrap();
-
-        assert!(vm.get_register_value(consts::RCOND).unwrap() == consts::FL_NEG);
-
-        // This means 'If last operation left flag negative, then increment PC in an PCoffset'
-        let br_instr = 0b0000100001000011;
-        br(br_instr, &mut vm).unwrap();
-
-        assert_eq!(67, vm.get_register_value(consts::RPC).unwrap());
-    }
-
-    #[test]
-    fn test_04() {
-        // Make an operation that lefts the negative or zero flag on, and then make a conditional branch
-
-        let mut vm = VM::new();
-        vm.update_register_value(consts::RR1, 162).unwrap();
-        vm.update_register_value(consts::RR2, 0).unwrap();
-
-        // This means 'And RR1 and RR2 and put the result on RR3'
-        let and_instr: u16 = 0b0101011001000010;
-        and(and_instr, &mut vm).unwrap();
-
-        assert!(vm.get_register_value(consts::RCOND).unwrap() == consts::FL_ZRO);
-
-        // This means 'If last operation left flag negative or zero, then increment PC in an PCoffset'
-        let br_instr = 0b0000110001100001;
-        br(br_instr, &mut vm).unwrap();
-
-        assert_eq!(97, vm.get_register_value(consts::RPC).unwrap());
-    }
-
-    #[test]
-    fn test_05() {
-        // Make a conditional branch and verify the RPC has moved
-
-        let mut vm = VM::new();
-
-        // Set a value bc can be initialized with garbage
-        vm.update_register_value(consts::RCOND, consts::FL_POS)
-            .unwrap();
-
-        // This means 'Increment PC in an PCoffset, no matter what happened in last operation'
-        let br_instr = 0b0000111011100001;
-        br(br_instr, &mut vm).unwrap();
-
-        assert_eq!(225, vm.get_register_value(consts::RPC).unwrap());
-    }
-}
-
 // JMP
 
 /// Sets the pc as the value in the base register
@@ -390,48 +127,6 @@ pub fn jmp(instr: u16, vm: &mut VM) -> Result<(), VmError> {
     let base_reg = (instr >> 6) & 0x7;
     vm.update_register_value(consts::RPC, vm.get_register_value(base_reg)?)?;
     Ok(())
-}
-
-#[cfg(test)]
-mod tests_jmp {
-    use super::{jmp, jsr};
-    use crate::hardware::{consts, vm::VM};
-
-    #[test]
-    fn test_01() {
-        // Jump increments the pc in the passed register value
-
-        let mut vm = VM::new();
-        vm.update_register_value(consts::RR1, 16).unwrap();
-
-        // This means 'Increment PC in the content in the base register'
-        let instr: u16 = 0b1100000001000000;
-        jmp(instr, &mut vm).unwrap();
-
-        assert_eq!(16, vm.get_register_value(consts::RPC).unwrap());
-    }
-
-    #[test]
-    fn test_02() {
-        // Jump returns to the original pc value after a jsr
-
-        let mut vm = VM::new();
-        vm.update_register_value(consts::RR1, 16).unwrap();
-
-        // This means 'Set PC in the content in the base register'
-        let instr: u16 = 0b1100000001000000;
-        jmp(instr, &mut vm).unwrap();
-
-        // This means 'Save PC at R7 ad then increment it in the extended PCoffset'
-        let instr: u16 = 0b0100100000011111;
-        jsr(instr, &mut vm).unwrap();
-
-        // This means 'Set PC in the content in the RR7'
-        let instr: u16 = 0b1100000111000000;
-        jmp(instr, &mut vm).unwrap();
-
-        assert_eq!(16, vm.get_register_value(consts::RPC).unwrap());
-    }
 }
 
 // JSR
@@ -458,49 +153,6 @@ pub fn jsr(instr: u16, vm: &mut VM) -> Result<(), VmError> {
     Ok(())
 }
 
-#[cfg(test)]
-mod tests_jsr {
-    use super::{jmp, jsr};
-    use crate::hardware::{consts, vm::VM};
-
-    #[test]
-    fn test_01() {
-        // Jsr saves the pc value and then increments the pc in the passed offset
-        let mut vm = VM::new();
-        vm.update_register_value(consts::RR1, 16).unwrap();
-
-        // This means 'Increment PC in the content in the base register'
-        let jmp_instr: u16 = 0b1100000001000000;
-        jmp(jmp_instr, &mut vm).unwrap();
-
-        // This means 'Save PC at R7 ad then increment it in the extended PCoffset'
-        let instr: u16 = 0b0100100000011111; // 31
-        jsr(instr, &mut vm).unwrap();
-
-        assert_eq!(16, vm.get_register_value(consts::RR7).unwrap());
-        assert_eq!(47, vm.get_register_value(consts::RPC).unwrap());
-    }
-
-    #[test]
-    fn test_02() {
-        // Jsr saves the pc value and then increments the pc in the value inside the passed register
-        let mut vm = VM::new();
-        vm.update_register_value(consts::RR1, 8).unwrap();
-        vm.update_register_value(consts::RR2, 40).unwrap();
-
-        // This means 'Increment PC in the content in the base register'
-        let jmp_instr: u16 = 0b1100000001000000;
-        jmp(jmp_instr, &mut vm).unwrap();
-
-        // This means 'Save PC at R7 ad then increment it in the value in the register'
-        let instr: u16 = 0b0100000010000000;
-        jsr(instr, &mut vm).unwrap();
-
-        assert_eq!(8, vm.get_register_value(consts::RR7).unwrap());
-        assert_eq!(40, vm.get_register_value(consts::RPC).unwrap());
-    }
-}
-
 // LD
 
 /// Loads in a destination register the value stored in pc plus an pc_offset, and then update the flags
@@ -521,50 +173,6 @@ pub fn ld(instr: u16, vm: &mut VM) -> Result<(), VmError> {
     Ok(())
 }
 
-#[cfg(test)]
-mod tests_ld {
-    use super::{ld, st};
-    use crate::hardware::{consts, vm::VM};
-
-    #[test]
-    fn test_01() {
-        // ld puts in the source register the content of the memory direction defined by the offset
-
-        let mut vm = VM::new();
-        vm.update_register_value(consts::RR1, 31).unwrap();
-
-        // This means 'Put at offset direction of memory the content of the source register'
-        let st_instr: u16 = 0b0011001000000001;
-        st(st_instr, &mut vm).unwrap();
-
-        // This means 'Put at source register the content of offset direction of memory'
-        let ld_instr: u16 = 0b0010011000000001;
-        ld(ld_instr, &mut vm).unwrap();
-
-        assert_eq!(31, vm.get_register_value(consts::RR3).unwrap());
-        assert!(vm.get_register_value(consts::RCOND).unwrap() == consts::FL_POS);
-    }
-
-    #[test]
-    fn test_02() {
-        // When putting a negative value, ld sets negative flag on
-
-        let mut vm = VM::new();
-        vm.update_register_value(consts::RR1, u16::max_value())
-            .unwrap();
-
-        // This means 'Put at offset direction of memory the content of the source register'
-        let st_instr: u16 = 0b0011001000000001;
-        st(st_instr, &mut vm).unwrap();
-
-        // This means 'Put at source register the content of offset direction of memory'
-        let ld_instr: u16 = 0b0010011000000001;
-        ld(ld_instr, &mut vm).unwrap();
-
-        assert!(vm.get_register_value(consts::RCOND).unwrap() == consts::FL_NEG);
-    }
-}
-
 // LDI
 
 /// Loads in a destination register the value stored in the direction obtained by the sum of pc and pc_offset, and then update the flags
@@ -583,51 +191,6 @@ pub fn ldi(instr: u16, vm: &mut VM) -> Result<(), VmError> {
     vm.update_flags(r0)?;
 
     Ok(())
-}
-
-#[cfg(test)]
-mod tests_ldi {
-    use super::{ldi, st};
-    use crate::hardware::{consts, vm::VM};
-
-    #[test]
-    fn test_01() {
-        // ldi puts in the source register the content in the memory address defined on the memory direction defined by the offset
-
-        let mut vm = VM::new();
-
-        vm.update_register_value(consts::RR1, 31).unwrap();
-
-        // This means 'Put at offset direction of memory the content of the source register'
-        let st1_instr: u16 = 0b0011001000000001; // 1
-        st(st1_instr, &mut vm).unwrap();
-
-        vm.update_register_value(consts::RR2, 96).unwrap();
-
-        // This means 'Put at offset direction of memory the content of the source register'
-        let st2_instr: u16 = 0b0011010000011111; // 31
-        st(st2_instr, &mut vm).unwrap();
-
-        // This means 'Put at source register the content defined on the direction of memory product of pc+offset'
-        let ldi_instr: u16 = 0b1010011000000001;
-        ldi(ldi_instr, &mut vm).unwrap();
-
-        assert_eq!(96, vm.get_register_value(consts::RR3).unwrap());
-        assert!(vm.get_register_value(consts::RCOND).unwrap() == consts::FL_POS);
-    }
-
-    #[test]
-    fn test_02() {
-        // When putting a zero value, ldi sets zero flag on (values of memory are initialized in zero)
-
-        let mut vm = VM::new();
-
-        // This means 'Put at source register the content defined on the direction of memory product of pc+offset'
-        let ldi_instr: u16 = 0b1010011000000001;
-        ldi(ldi_instr, &mut vm).unwrap();
-
-        assert!(vm.get_register_value(consts::RCOND).unwrap() == consts::FL_ZRO);
-    }
 }
 
 // LDR
@@ -654,46 +217,6 @@ pub fn ldr(instr: u16, vm: &mut VM) -> Result<(), VmError> {
     Ok(())
 }
 
-#[cfg(test)]
-mod tests_ldr {
-    use super::{ldr, st};
-    use crate::{hardware::consts, hardware::vm::VM};
-
-    #[test]
-    fn test_01() {
-        // ldr puts in the source register the content in the memory address defined between the offset and the base register
-
-        let mut vm = VM::new();
-
-        vm.update_register_value(consts::RR1, 49).unwrap();
-        vm.update_register_value(consts::RR2, 16).unwrap();
-
-        // This means 'Put at offset direction of memory the content of the source register'
-        let st_instr: u16 = 0b0011001000011111; // 31
-        st(st_instr, &mut vm).unwrap();
-
-        // This means 'Put at source register the content of offset direction of memory + base register value'
-        let ldr_instr: u16 = 0b0110011010001111;
-        ldr(ldr_instr, &mut vm).unwrap();
-
-        assert_eq!(49, vm.get_register_value(consts::RR3).unwrap());
-        assert!(vm.get_register_value(consts::RCOND).unwrap() == consts::FL_POS);
-    }
-
-    #[test]
-    fn test_02() {
-        // When putting a zero value, ldr sets zero flag on (values of memory and registers are initialized in zero)
-
-        let mut vm = VM::new();
-
-        // This means 'Put at source register the content of offset direction of memory + base register value'
-        let ldr_instr: u16 = 0b0110001000000001;
-        ldr(ldr_instr, &mut vm).unwrap();
-
-        assert!(vm.get_register_value(consts::RCOND).unwrap() == consts::FL_ZRO);
-    }
-}
-
 // LEA
 
 // Loads in a destination register the sum between pc and an pc_offset, and then update the flags
@@ -713,30 +236,6 @@ pub fn lea(instr: u16, vm: &mut VM) -> Result<(), VmError> {
     Ok(())
 }
 
-#[cfg(test)]
-mod tests_lea {
-    use super::{jmp, lea};
-    use crate::hardware::{consts, vm::VM};
-
-    #[test]
-    fn test_01() {
-        // Lea puts in a destination register the sum between the PC register and an offset
-
-        let mut vm = VM::new();
-        vm.update_register_value(consts::RR1, 16).unwrap();
-
-        // This means 'Increment PC in the content in the base register'
-        let jmp_instr: u16 = 0b1100000001000010;
-        jmp(jmp_instr, &mut vm).unwrap();
-
-        // This means 'Save PC at R7 ad then increment it in the extended PCoffset'
-        let instr: u16 = 0b1110100000011111; // 31
-        lea(instr, &mut vm).unwrap();
-
-        assert_eq!(47, vm.get_register_value(consts::RR4).unwrap());
-    }
-}
-
 // NOT
 
 /// Performs an not on the value of a base register and puts the result in a destination register, and then update the flags
@@ -753,63 +252,6 @@ pub fn not(instr: u16, vm: &mut VM) -> Result<(), VmError> {
     vm.update_flags(dest_reg)?;
 
     Ok(())
-}
-
-#[cfg(test)]
-mod tests_not {
-    use super::not;
-    use crate::hardware::{consts, vm::VM};
-
-    #[test]
-    fn test_01() {
-        // Not puts in a destination register the result of the not operation on the base register
-
-        let mut vm = VM::new();
-        vm.update_register_value(consts::RR1, u16::max_value())
-            .unwrap();
-        vm.update_register_value(consts::RR2, 5).unwrap();
-
-        // This means 'Put in the destination register the result of the not operation on the base register'
-        let instr: u16 = 0b1001010001111111;
-        not(instr, &mut vm).unwrap();
-
-        assert_eq!(0, vm.get_register_value(consts::RR2).unwrap());
-    }
-
-    #[test]
-    fn test_02() {
-        // When performing with a positive number, sets the negative flag on
-
-        let mut vm = VM::new();
-        vm.update_register_value(consts::RR1, 6).unwrap();
-
-        // This means 'Put in the destination register the result of the not operation on the base register'
-        let instr: u16 = 0b1001010001111111;
-        not(instr, &mut vm).unwrap();
-
-        assert_eq!(
-            consts::FL_NEG,
-            vm.get_register_value(consts::RCOND).unwrap()
-        );
-    }
-
-    #[test]
-    fn test_03() {
-        // When performing with a 'negative' number, sets the positive flag on
-
-        let mut vm = VM::new();
-        vm.update_register_value(consts::RR1, u16::max_value() - 10)
-            .unwrap();
-
-        // This means 'Put in the destination register the result of the not operation on the base register'
-        let instr: u16 = 0b1001010001111111;
-        not(instr, &mut vm).unwrap();
-
-        assert_eq!(
-            consts::FL_POS,
-            vm.get_register_value(consts::RCOND).unwrap()
-        );
-    }
 }
 
 // ST
@@ -833,30 +275,6 @@ pub fn st(instr: u16, vm: &mut VM) -> Result<(), VmError> {
     Ok(())
 }
 
-#[cfg(test)]
-mod tests_st {
-    use super::{ld, st};
-    use crate::hardware::{consts, vm::VM};
-
-    #[test]
-    fn test_01() {
-        // st puts in the memory direction defined by the offset the content of the source register
-
-        let mut vm = VM::new();
-        vm.update_register_value(consts::RR1, 16).unwrap();
-
-        // This means 'Put at offset direction of memory the content of the source register'
-        let st_instr: u16 = 0b0011001000000001;
-        st(st_instr, &mut vm).unwrap();
-
-        // This means 'Put at source register the content of offset direction of memory'
-        let ld_instr: u16 = 0b0010011000000001;
-        ld(ld_instr, &mut vm).unwrap();
-
-        assert_eq!(16, vm.get_register_value(consts::RR3).unwrap());
-    }
-}
-
 // STI
 
 /// Puts in source register the value stored in an address obtained searching in the direction (pc + a pc_offset) of memory
@@ -878,35 +296,6 @@ pub fn sti(instr: u16, vm: &mut VM) -> Result<(), VmError> {
     vm.mem_write(address as u16, value);
 
     Ok(())
-}
-
-#[cfg(test)]
-mod tests_sti {
-    use super::{ld, st, sti};
-    use crate::hardware::{consts, vm::VM};
-
-    #[test]
-    fn test_01() {
-        // sti puts in the memory direction placed in the memory direction defined by the offset the content of the source register
-
-        let mut vm = VM::new();
-        vm.update_register_value(consts::RR1, 16).unwrap();
-        vm.update_register_value(consts::RR2, 47).unwrap();
-
-        // This means 'Put at offset direction of memory the content of the source register'
-        let st_instr: u16 = 0b0011001000000011;
-        st(st_instr, &mut vm).unwrap();
-
-        // This means 'Find the offset direction of memory the direction where to put the content of the source register and do it'
-        let sti_instr: u16 = 0b1011010000000011;
-        sti(sti_instr, &mut vm).unwrap();
-
-        // This means 'Put at source register the content of offset direction of memory'
-        let ld_instr: u16 = 0b0010011000010000;
-        ld(ld_instr, &mut vm).unwrap();
-
-        assert_eq!(47, vm.get_register_value(consts::RR3).unwrap());
-    }
 }
 
 // STR
@@ -933,43 +322,7 @@ pub fn str(instr: u16, vm: &mut VM) -> Result<(), VmError> {
     Ok(())
 }
 
-#[cfg(test)]
-mod tests_str {
-    use super::{ld, str};
-    use crate::hardware::{consts, vm::VM};
-
-    #[test]
-    fn test_01() {
-        // str puts in the memory direction defined by the offset and the base register the content of the source register
-
-        let mut vm = VM::new();
-        vm.update_register_value(consts::RR1, 16).unwrap();
-        vm.update_register_value(consts::RR2, 57).unwrap();
-
-        // This means 'Put at (offset + reg value) direction of memory the content of the source register'
-        let str_instr: u16 = 0b0111010001000001;
-        str(str_instr, &mut vm).unwrap();
-
-        // This means 'Put at source register the content of offset direction of memory'
-        let ld_instr: u16 = 0b0010011000010001;
-        ld(ld_instr, &mut vm).unwrap();
-
-        assert_eq!(57, vm.get_register_value(consts::RR3).unwrap());
-    } // This test is similar to the thing I would test with de load type instructions
-}
-
 // TRAP
-use std::{
-    io::{self, Read, Write},
-    process,
-};
-
-pub const TRAP_GETC: u16 = 0x20;
-pub const TRAP_OUT: u16 = 0x21;
-pub const TRAP_PUTS: u16 = 0x22;
-pub const TRAP_IN: u16 = 0x23;
-pub const TRAP_PUTSP: u16 = 0x24;
-pub const TRAP_HALT: u16 = 0x25;
 
 /// Performs the corresponding trap operation
 pub fn trap(instr: u16, vm: &mut VM) -> Result<(), VmError> {
@@ -1063,12 +416,610 @@ pub fn trap(instr: u16, vm: &mut VM) -> Result<(), VmError> {
 }
 
 #[cfg(test)]
-mod tests_trap {
-    use super::{jmp, trap, TRAP_OUT};
-    use crate::hardware::{consts, vm::VM};
+mod tests {
+    use super::{add, and, br, jmp, jsr, ld, ldi, ldr, lea, not, st, sti, str, trap, TRAP_OUT};
+
+    use crate::hardware::consts;
+    use crate::hardware::vm::VM;
+
+    // ADD
 
     #[test]
-    fn test_01() {
+    fn test_add_two_registers_puts_result_in_other_register() {
+        // Adding two number with registers makes the sum and lefts it in a third register
+
+        let mut vm = VM::new();
+        vm.update_register_value(consts::RR1, 1).unwrap();
+        vm.update_register_value(consts::RR2, 1).unwrap();
+
+        // This means 'Add RR1 and RR2 and put the result on RR3'
+        let instr: u16 = 0b0001011001000010;
+
+        add(instr, &mut vm).unwrap();
+
+        assert_eq!(2, vm.get_register_value(consts::RR3).unwrap());
+    }
+
+    #[test]
+    fn test_add_register_and_imm5_puts_result_in_other_register() {
+        // Adding one number with an imm5 makes the sum and lefts the result it in a third register
+
+        let mut vm = VM::new();
+        vm.update_register_value(consts::RR1, 3).unwrap();
+
+        // This means 'Add RR1 and an imm5 and put the result on RR3'
+        let instr: u16 = 0b0001011001100111;
+
+        add(instr, &mut vm).unwrap();
+
+        assert_eq!(10, vm.get_register_value(consts::RR3).unwrap());
+    }
+
+    #[test]
+    fn test_add_with_positive_result_lets_turned_on_positive_flag() {
+        // Adding with a positive result lets turned on the positive flag
+
+        let mut vm = VM::new();
+        vm.update_register_value(consts::RR1, 3).unwrap();
+
+        // This means 'Add RR1 and an imm5 and put the result on RR3'
+        let instr: u16 = 0b0001011001100111;
+
+        add(instr, &mut vm).unwrap();
+
+        assert_eq!(
+            consts::FL_POS,
+            vm.get_register_value(consts::RCOND).unwrap()
+        );
+    }
+
+    #[test]
+    fn test_add_with_zero_result_lets_turned_on_zero_flag() {
+        // Adding with a zero result lets turned on the zero flag
+
+        let mut vm = VM::new();
+        vm.update_register_value(consts::RR1, 0).unwrap();
+
+        // This means 'Add RR1 and an imm5 and put the result on RR3'
+        let instr: u16 = 0b0001011001100000;
+
+        add(instr, &mut vm).unwrap();
+
+        assert_eq!(
+            consts::FL_ZRO,
+            vm.get_register_value(consts::RCOND).unwrap()
+        );
+    }
+
+    #[test]
+    fn test_add_with_negative_result_lets_turned_on_negative_flag() {
+        // Adding with a negative result lets turned on the negative flag
+
+        let mut vm = VM::new();
+        vm.update_register_value(consts::RR1, 0).unwrap();
+
+        // This means 'Add RR1 and an imm5 and put the result on RR3'
+        let instr: u16 = 0b0001011001110000;
+
+        add(instr, &mut vm).unwrap();
+
+        assert_eq!(
+            consts::FL_NEG,
+            vm.get_register_value(consts::RCOND).unwrap()
+        );
+    }
+
+    // AND
+
+    #[test]
+    fn test_do_an_and_with_two_registers_puts_result_in_other_register() {
+        // Doing an and with two numbers in registers makes the sum and lefts it in a third register
+
+        let mut vm = VM::new();
+        vm.update_register_value(consts::RR1, 2).unwrap();
+        vm.update_register_value(consts::RR2, 3).unwrap();
+
+        // This means 'Do an AND with RR1 and RR2 and put the result on RR3'
+        let instr: u16 = 0b0101011001000010;
+
+        and(instr, &mut vm).unwrap();
+
+        assert_eq!(2, vm.get_register_value(consts::RR3).unwrap());
+    }
+
+    #[test]
+    fn test_do_an_and_with_registers_and_imm5_puts_result_in_other_register() {
+        // Doing an and with one register number and an imm5 makes the sum and lefts the result it in a third register
+
+        let mut vm = VM::new();
+        vm.update_register_value(consts::RR1, 15).unwrap();
+
+        // This means 'Do an AND with RR1 and an imm5 and put the result on RR3'
+        let instr: u16 = 0b0101011001100111;
+
+        and(instr, &mut vm).unwrap();
+
+        assert_eq!(7, vm.get_register_value(consts::RR3).unwrap());
+    }
+
+    #[test]
+    fn test_and_with_positive_result_lets_turned_on_positive_flag() {
+        // Perform an and with a positive result lets turned on the positive flag
+
+        let mut vm = VM::new();
+        vm.update_register_value(consts::RR1, 3).unwrap();
+
+        // This means 'Do an and with RR1 and an imm5 and put the result on RR3'
+        let instr: u16 = 0b0001011001100111;
+
+        and(instr, &mut vm).unwrap();
+
+        assert_eq!(
+            consts::FL_POS,
+            vm.get_register_value(consts::RCOND).unwrap()
+        );
+    }
+
+    #[test]
+    fn test_and_with_zero_result_lets_turned_on_zero_flag() {
+        // Perform an and with a zero result lets turned on the positive flag
+
+        let mut vm = VM::new();
+        vm.update_register_value(consts::RR1, 0).unwrap();
+
+        // This means 'Do an and with RR1 and an imm5 and put the result on RR3'
+        let instr: u16 = 0b0001011001111111;
+
+        and(instr, &mut vm).unwrap();
+
+        assert_eq!(
+            consts::FL_ZRO,
+            vm.get_register_value(consts::RCOND).unwrap()
+        );
+    }
+
+    // BR
+
+    #[test]
+    fn test_branch_depending_on_zero_flag_performs_when_zero_flag_activated() {
+        // Make an operation that lefts the zero flag on, and then make a conditional branch
+
+        let mut vm = VM::new();
+        vm.update_register_value(consts::RR1, 0).unwrap();
+        vm.update_register_value(consts::RR2, 0).unwrap();
+
+        // This means 'Add RR1 and RR2 and put the result on RR3'
+        let add_instr: u16 = 0b0001011001000010;
+        add(add_instr, &mut vm).unwrap();
+
+        assert!(vm.get_register_value(consts::RCOND).unwrap() == consts::FL_ZRO);
+
+        // This means 'If last operation left flag zero, then increment PC in an PCoffset'
+        let br_instr = 0b0000010001100000;
+        br(br_instr, &mut vm).unwrap();
+
+        assert_eq!(96, vm.get_register_value(consts::RPC).unwrap());
+    }
+
+    #[test]
+    fn test_branch_depending_on_positive_flag_performs_when_positive_flag_activated() {
+        // Make an operation that lefts the positive flag on, and then make a conditional branch
+
+        let mut vm = VM::new();
+        vm.update_register_value(consts::RR1, 1).unwrap();
+        vm.update_register_value(consts::RR2, 4).unwrap();
+
+        // This means 'Add RR1 and RR2 and put the result on RR3'
+        let add_instr: u16 = 0b0001011001000010;
+        add(add_instr, &mut vm).unwrap();
+
+        assert!(vm.get_register_value(consts::RCOND).unwrap() == consts::FL_POS);
+
+        // This means 'If last operation left flag positive, then increment PC in an PCoffset'
+        let br_instr = 0b0000001001000001;
+        br(br_instr, &mut vm).unwrap();
+
+        assert_eq!(65, vm.get_register_value(consts::RPC).unwrap());
+    }
+
+    #[test]
+    fn test_branch_depending_on_negative_flag_performs_when_negative_flag_activated() {
+        // Make an operation that lefts the negative flag on, and then make a conditional branch
+
+        let mut vm = VM::new();
+        vm.update_register_value(consts::RR1, 1).unwrap();
+        vm.update_register_value(consts::RR2, 4).unwrap();
+
+        // This means 'Add RR1 and an imm5 and put the result on RR3'
+        let add_instr: u16 = 0b0001011001111110;
+        add(add_instr, &mut vm).unwrap();
+
+        assert!(vm.get_register_value(consts::RCOND).unwrap() == consts::FL_NEG);
+
+        // This means 'If last operation left flag negative, then increment PC in an PCoffset'
+        let br_instr = 0b0000100001000011;
+        br(br_instr, &mut vm).unwrap();
+
+        assert_eq!(67, vm.get_register_value(consts::RPC).unwrap());
+    }
+
+    #[test]
+    fn test_branch_depending_on_negative_or_zero_flag_performs_when_zero_flag_activated() {
+        // Make an operation that lefts the negative or zero flag on, and then make a conditional branch
+
+        let mut vm = VM::new();
+        vm.update_register_value(consts::RR1, 162).unwrap();
+        vm.update_register_value(consts::RR2, 0).unwrap();
+
+        // This means 'And RR1 and RR2 and put the result on RR3'
+        let and_instr: u16 = 0b0101011001000010;
+        and(and_instr, &mut vm).unwrap();
+
+        assert!(vm.get_register_value(consts::RCOND).unwrap() == consts::FL_ZRO);
+
+        // This means 'If last operation left flag negative or zero, then increment PC in an PCoffset'
+        let br_instr = 0b0000110001100001;
+        br(br_instr, &mut vm).unwrap();
+
+        assert_eq!(97, vm.get_register_value(consts::RPC).unwrap());
+    }
+
+    #[test]
+    fn test_branch_with_all_flags_always_jumps() {
+        // Make a conditional branch and verify the RPC has moved
+
+        let mut vm = VM::new();
+
+        // Set a value bc can be initialized with garbage
+        vm.update_register_value(consts::RCOND, consts::FL_POS)
+            .unwrap();
+
+        // This means 'Increment PC in an PCoffset, no matter what happened in last operation'
+        let br_instr = 0b0000111011100001;
+        br(br_instr, &mut vm).unwrap();
+
+        assert_eq!(225, vm.get_register_value(consts::RPC).unwrap());
+    }
+
+    // JMP
+
+    #[test]
+    fn test_jmp_increments_pc_in_register_value() {
+        // Jump increments the pc in the passed register value
+
+        let mut vm = VM::new();
+        vm.update_register_value(consts::RR1, 16).unwrap();
+
+        // This means 'Increment PC in the content in the base register'
+        let instr: u16 = 0b1100000001000000;
+        jmp(instr, &mut vm).unwrap();
+
+        assert_eq!(16, vm.get_register_value(consts::RPC).unwrap());
+    }
+
+    #[test]
+    fn test_jmp_returns_to_original_pc_after_jsr() {
+        // Jump returns to the original pc value after a jsr
+
+        let mut vm = VM::new();
+        vm.update_register_value(consts::RR1, 16).unwrap();
+
+        // This means 'Set PC in the content in the base register'
+        let instr: u16 = 0b1100000001000000;
+        jmp(instr, &mut vm).unwrap();
+
+        // This means 'Save PC at R7 ad then increment it in the extended PCoffset'
+        let instr: u16 = 0b0100100000011111;
+        jsr(instr, &mut vm).unwrap();
+
+        // This means 'Set PC in the content in the RR7'
+        let instr: u16 = 0b1100000111000000;
+        jmp(instr, &mut vm).unwrap();
+
+        assert_eq!(16, vm.get_register_value(consts::RPC).unwrap());
+    }
+
+    // JSR
+
+    #[test]
+    fn test_jsr_saves_pc_in_r7_and_increments_pc_in_offset() {
+        // Jsr saves the pc value and then increments the pc in the passed offset
+        let mut vm = VM::new();
+        vm.update_register_value(consts::RR1, 16).unwrap();
+
+        // This means 'Increment PC in the content in the base register'
+        let jmp_instr: u16 = 0b1100000001000000;
+        jmp(jmp_instr, &mut vm).unwrap();
+
+        // This means 'Save PC at R7 ad then increment it in the extended PCoffset'
+        let instr: u16 = 0b0100100000011111; // 31
+        jsr(instr, &mut vm).unwrap();
+
+        assert_eq!(16, vm.get_register_value(consts::RR7).unwrap());
+        assert_eq!(47, vm.get_register_value(consts::RPC).unwrap());
+    }
+
+    #[test]
+    fn test_jsr_saves_pc_in_r7_and_increments_pc_in_a_register_value() {
+        // Jsr saves the pc value and then increments the pc in the value inside the passed register
+        let mut vm = VM::new();
+        vm.update_register_value(consts::RR1, 8).unwrap();
+        vm.update_register_value(consts::RR2, 40).unwrap();
+
+        // This means 'Increment PC in the content in the base register'
+        let jmp_instr: u16 = 0b1100000001000000;
+        jmp(jmp_instr, &mut vm).unwrap();
+
+        // This means 'Save PC at R7 ad then increment it in the value in the register'
+        let instr: u16 = 0b0100000010000000;
+        jsr(instr, &mut vm).unwrap();
+
+        assert_eq!(8, vm.get_register_value(consts::RR7).unwrap());
+        assert_eq!(40, vm.get_register_value(consts::RPC).unwrap());
+    }
+
+    // LD
+
+    #[test]
+    fn test_ld_puts_in_register_content_on_a_memory_location_defined_by_offset() {
+        // ld puts in the source register the content of the memory direction defined by the offset
+
+        let mut vm = VM::new();
+        vm.update_register_value(consts::RR1, 31).unwrap();
+
+        // This means 'Put at offset direction of memory the content of the source register'
+        let st_instr: u16 = 0b0011001000000001;
+        st(st_instr, &mut vm).unwrap();
+
+        // This means 'Put at source register the content of offset direction of memory'
+        let ld_instr: u16 = 0b0010011000000001;
+        ld(ld_instr, &mut vm).unwrap();
+
+        assert_eq!(31, vm.get_register_value(consts::RR3).unwrap());
+        assert!(vm.get_register_value(consts::RCOND).unwrap() == consts::FL_POS);
+    }
+
+    #[test]
+    fn test_ld_sets_negative_flag_on_when_putting_negative_values() {
+        // When putting a negative value, ld sets negative flag on
+
+        let mut vm = VM::new();
+        vm.update_register_value(consts::RR1, u16::max_value())
+            .unwrap();
+
+        // This means 'Put at offset direction of memory the content of the source register'
+        let st_instr: u16 = 0b0011001000000001;
+        st(st_instr, &mut vm).unwrap();
+
+        // This means 'Put at source register the content of offset direction of memory'
+        let ld_instr: u16 = 0b0010011000000001;
+        ld(ld_instr, &mut vm).unwrap();
+
+        assert!(vm.get_register_value(consts::RCOND).unwrap() == consts::FL_NEG);
+    }
+
+    // LDI
+
+    #[test]
+    fn test_ldi_puts_in_register_content_on_a_memory_location_defined_by_another_memory_location() {
+        // ldi puts in the source register the content in the memory address defined on the memory direction defined by the offset
+
+        let mut vm = VM::new();
+
+        vm.update_register_value(consts::RR1, 31).unwrap();
+
+        // This means 'Put at offset direction of memory the content of the source register'
+        let st1_instr: u16 = 0b0011001000000001; // 1
+        st(st1_instr, &mut vm).unwrap();
+
+        vm.update_register_value(consts::RR2, 96).unwrap();
+
+        // This means 'Put at offset direction of memory the content of the source register'
+        let st2_instr: u16 = 0b0011010000011111; // 31
+        st(st2_instr, &mut vm).unwrap();
+
+        // This means 'Put at source register the content defined on the direction of memory product of pc+offset'
+        let ldi_instr: u16 = 0b1010011000000001;
+        ldi(ldi_instr, &mut vm).unwrap();
+
+        assert_eq!(96, vm.get_register_value(consts::RR3).unwrap());
+        assert!(vm.get_register_value(consts::RCOND).unwrap() == consts::FL_POS);
+    }
+
+    #[test]
+    fn test_ldi_sets_zero_flag_on_when_putting_zero_values() {
+        // When putting a zero value, ldi sets zero flag on (values of memory are initialized in zero)
+
+        let mut vm = VM::new();
+
+        // This means 'Put at source register the content defined on the direction of memory product of pc+offset'
+        let ldi_instr: u16 = 0b1010011000000001;
+        ldi(ldi_instr, &mut vm).unwrap();
+
+        assert!(vm.get_register_value(consts::RCOND).unwrap() == consts::FL_ZRO);
+    }
+
+    // LDR
+
+    #[test]
+    fn test_ldr_puts_in_register_content_on_a_memory_location_defined_by_offset_and_a_register() {
+        // ldr puts in the source register the content in the memory address defined between the offset and the base register
+
+        let mut vm = VM::new();
+
+        vm.update_register_value(consts::RR1, 49).unwrap();
+        vm.update_register_value(consts::RR2, 16).unwrap();
+
+        // This means 'Put at offset direction of memory the content of the source register'
+        let st_instr: u16 = 0b0011001000011111; // 31
+        st(st_instr, &mut vm).unwrap();
+
+        // This means 'Put at source register the content of offset direction of memory + base register value'
+        let ldr_instr: u16 = 0b0110011010001111;
+        ldr(ldr_instr, &mut vm).unwrap();
+
+        assert_eq!(49, vm.get_register_value(consts::RR3).unwrap());
+        assert!(vm.get_register_value(consts::RCOND).unwrap() == consts::FL_POS);
+    }
+
+    #[test]
+    fn test_ldr_sets_zero_flag_on_when_putting_zero_values() {
+        // When putting a zero value, ldr sets zero flag on (values of memory and registers are initialized in zero)
+
+        let mut vm = VM::new();
+
+        // This means 'Put at source register the content of offset direction of memory + base register value'
+        let ldr_instr: u16 = 0b0110001000000001;
+        ldr(ldr_instr, &mut vm).unwrap();
+
+        assert!(vm.get_register_value(consts::RCOND).unwrap() == consts::FL_ZRO);
+    }
+
+    // LEA
+
+    #[test]
+    fn test_lea_puts_in_register_sum_between_pc_and_offset() {
+        // Lea puts in a destination register the sum between the PC register and an offset
+
+        let mut vm = VM::new();
+        vm.update_register_value(consts::RR1, 16).unwrap();
+
+        // This means 'Increment PC in the content in the base register'
+        let jmp_instr: u16 = 0b1100000001000010;
+        jmp(jmp_instr, &mut vm).unwrap();
+
+        // This means 'Save PC at R7 ad then increment it in the extended PCoffset'
+        let instr: u16 = 0b1110100000011111; // 31
+        lea(instr, &mut vm).unwrap();
+
+        assert_eq!(47, vm.get_register_value(consts::RR4).unwrap());
+    }
+
+    // NOT
+
+    #[test]
+    fn test_not_puts_in_register_result_of_not_operation_on_other_register() {
+        // Not puts in a destination register the result of the not operation on the base register
+
+        let mut vm = VM::new();
+        vm.update_register_value(consts::RR1, u16::max_value())
+            .unwrap();
+        vm.update_register_value(consts::RR2, 5).unwrap();
+
+        // This means 'Put in the destination register the result of the not operation on the base register'
+        let instr: u16 = 0b1001010001111111;
+        not(instr, &mut vm).unwrap();
+
+        assert_eq!(0, vm.get_register_value(consts::RR2).unwrap());
+    }
+
+    #[test]
+    fn test_not_sets_negative_flag_when_called_with_positive_number() {
+        // When performing with a positive number, sets the negative flag on
+
+        let mut vm = VM::new();
+        vm.update_register_value(consts::RR1, 6).unwrap();
+
+        // This means 'Put in the destination register the result of the not operation on the base register'
+        let instr: u16 = 0b1001010001111111;
+        not(instr, &mut vm).unwrap();
+
+        assert_eq!(
+            consts::FL_NEG,
+            vm.get_register_value(consts::RCOND).unwrap()
+        );
+    }
+
+    #[test]
+    fn test_not_sets_positive_flag_when_called_with_negative_number() {
+        // When performing with a 'negative' number, sets the positive flag on
+
+        let mut vm = VM::new();
+        vm.update_register_value(consts::RR1, u16::max_value() - 10)
+            .unwrap();
+
+        // This means 'Put in the destination register the result of the not operation on the base register'
+        let instr: u16 = 0b1001010001111111;
+        not(instr, &mut vm).unwrap();
+
+        assert_eq!(
+            consts::FL_POS,
+            vm.get_register_value(consts::RCOND).unwrap()
+        );
+    }
+
+    // ST
+
+    #[test]
+    fn test_st_puts_in_a_memory_location_defined_by_offset_the_content_of_register() {
+        // st puts in the memory direction defined by the offset the content of the source register
+
+        let mut vm = VM::new();
+        vm.update_register_value(consts::RR1, 16).unwrap();
+
+        // This means 'Put at offset direction of memory the content of the source register'
+        let st_instr: u16 = 0b0011001000000001;
+        st(st_instr, &mut vm).unwrap();
+
+        // This means 'Put at source register the content of offset direction of memory'
+        let ld_instr: u16 = 0b0010011000000001;
+        ld(ld_instr, &mut vm).unwrap();
+
+        assert_eq!(16, vm.get_register_value(consts::RR3).unwrap());
+    }
+
+    // STI
+
+    #[test]
+    fn test_sti_puts_in_a_memory_location_defined_by_another_memory_location_the_content_of_register(
+    ) {
+        // sti puts in the memory direction placed in the memory direction defined by the offset the content of the source register
+
+        let mut vm = VM::new();
+        vm.update_register_value(consts::RR1, 16).unwrap();
+        vm.update_register_value(consts::RR2, 47).unwrap();
+
+        // This means 'Put at offset direction of memory the content of the source register'
+        let st_instr: u16 = 0b0011001000000011;
+        st(st_instr, &mut vm).unwrap();
+
+        // This means 'Find the offset direction of memory the direction where to put the content of the source register and do it'
+        let sti_instr: u16 = 0b1011010000000011;
+        sti(sti_instr, &mut vm).unwrap();
+
+        // This means 'Put at source register the content of offset direction of memory'
+        let ld_instr: u16 = 0b0010011000010000;
+        ld(ld_instr, &mut vm).unwrap();
+
+        assert_eq!(47, vm.get_register_value(consts::RR3).unwrap());
+    }
+
+    // STR
+
+    #[test]
+    fn test_str_puts_in_a_memory_location_defined_by_offset_and_a_register_the_content_of_another_register(
+    ) {
+        // str puts in the memory direction defined by the offset and the base register the content of the source register
+
+        let mut vm = VM::new();
+        vm.update_register_value(consts::RR1, 16).unwrap();
+        vm.update_register_value(consts::RR2, 57).unwrap();
+
+        // This means 'Put at (offset + reg value) direction of memory the content of the source register'
+        let str_instr: u16 = 0b0111010001000001;
+        str(str_instr, &mut vm).unwrap();
+
+        // This means 'Put at source register the content of offset direction of memory'
+        let ld_instr: u16 = 0b0010011000010001;
+        ld(ld_instr, &mut vm).unwrap();
+
+        assert_eq!(57, vm.get_register_value(consts::RR3).unwrap());
+    }
+
+    // TRAP
+
+    #[test]
+    fn test_trap_saves_pc_value_in_r7() {
         //Check that the value of the PC is saved in R7
         let mut vm = VM::new();
 
@@ -1082,6 +1033,4 @@ mod tests_trap {
 
         assert_eq!(16, vm.get_register_value(consts::RR7).unwrap());
     }
-
-    // I imagine other tests, but for that cases i would have to mock i/o operations
 }
