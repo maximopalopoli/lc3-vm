@@ -1,5 +1,3 @@
-pub mod condition_flags;
-pub mod memory;
+pub mod consts;
 pub mod opcodes;
-pub mod registers;
 pub mod vm;
